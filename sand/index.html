@@ -84,6 +84,86 @@ const gridHeight = canvas.height / pixelSize;
 let grid = Array.from({ length: gridHeight }, () => Array(gridWidth).fill(null));
 let particles = []; // List of floating sparks
 
+
+
+
+
+
+let isDrawing = false;
+
+function handleDraw(x, y) {
+    const material = document.getElementById("material").value;
+
+    if (material === "seed") {
+        spawnParticle("seed", x, y);
+    } else if (material === "firefly") {
+        const gx = Math.floor(x / pixelSize);
+        const gy = Math.floor(y / pixelSize);
+        if (!grid[gy][gx]) {
+            const firefly = createParticle("firefly", gx, gy, "#ffff66");
+            firefly.state = "flying";
+            firefly.rested = 0;
+            grid[gy][gx] = firefly;
+        }
+    } else if (material !== "nuclearBomb") {
+        for (let dx = -1; dx <= 1; dx++) {
+            for (let dy = -1; dy <= 1; dy++) {
+                spawnParticle(material, x + dx * pixelSize, y + dy * pixelSize);
+            }
+        }
+    }
+}
+
+// === Mouse Events ===
+canvas.addEventListener("mousedown", () => isDrawing = true);
+canvas.addEventListener("mouseup", () => isDrawing = false);
+canvas.addEventListener("mouseleave", () => isDrawing = false);
+canvas.addEventListener("mousemove", e => {
+    if (!isDrawing) return;
+    handleDraw(e.offsetX, e.offsetY);
+});
+
+// === Touch Events ===
+canvas.addEventListener("touchstart", e => {
+    isDrawing = true;
+    const touch = e.touches[0];
+    const rect = canvas.getBoundingClientRect();
+    const x = touch.clientX - rect.left;
+    const y = touch.clientY - rect.top;
+    handleDraw(x, y);
+    e.preventDefault();
+});
+
+canvas.addEventListener("touchmove", e => {
+    if (!isDrawing) return;
+    const touch = e.touches[0];
+    const rect = canvas.getBoundingClientRect();
+    const x = touch.clientX - rect.left;
+    const y = touch.clientY - rect.top;
+    handleDraw(x, y);
+    e.preventDefault();
+});
+
+canvas.addEventListener("touchend", () => isDrawing = false);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 // ==== Utility Functions ====
 function getRandomPlantColor() {
     const greens = ["#228B22", "#32CD32", "#6B8E23", "#2E8B57", "#7CFC00", "#3CB371", "#00FF7F"];
@@ -1112,6 +1192,22 @@ canvas.addEventListener("click", e => {
         if (!grid[y][x]) {
             grid[y][x] = createParticle("nuclearBomb", x, y);
         }
+    }
+});
+canvas.addEventListener("touchstart", e => {
+    e.preventDefault(); // Prevent scrolling and zooming on touch
+
+    const touch = e.touches[0];
+    const rect = canvas.getBoundingClientRect();
+    const x = Math.floor((touch.clientX - rect.left) / pixelSize);
+    const y = Math.floor((touch.clientY - rect.top) / pixelSize);
+    const material = document.getElementById("material").value;
+
+    // Make sure coordinates are inside grid
+    if (x < 0 || x >= gridWidth || y < 0 || y >= gridHeight) return;
+
+    if (!grid[y][x]) {
+        grid[y][x] = createParticle(material, x, y);
     }
 });
 
