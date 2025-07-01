@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Entropy Lab</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<canvas id="simCanvas"></canvas>
+
+<div class="gui">
+  <button class="circle-button" id="materialToggle" title="Select Material">⚗️</button>
+  <div class="brush-size">
+    <span>🖌️</span>
+    <input type="range" id="brushRange" min="1" max="10" value="1" />
+    <span id="brushValue">1</span>
+  </div>
+</div>
+
+<div id="modalContainer"></div>
+<script src="liquid.js"></script>
+<script src="powder.js"></script>
+<script src="solid.js"></script>
+<script type="module" src="javascript.js"></script>
+
+
+
+
+</body>
+</html>

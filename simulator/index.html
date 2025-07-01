@@ -4,56 +4,143 @@
     <meta charset="UTF-8" />
     <title></title>
     <link rel="stylesheet" href="style.css" />
+    <style>
+      .material-toggle {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 10px 20px;
+  font-size: 1rem;
+  z-index: 1001;
+  cursor: pointer;
+  background: #333;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+}
+
+.material-modal {
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100vw;
+  height: 100vh;
+  backdrop-filter: blur(6px);
+  background-color: rgba(0, 0, 0, 0.6);
+  justify-content: center;
+  align-items: center;
+}
+
+.material-modal.active {
+  display: flex;
+}
+
+.material-content {
+  background: #222;
+  padding: 20px;
+  border-radius: 16px;
+  max-height: 80vh;
+  width: 90%;
+  max-width: 600px;
+  overflow-y: auto;
+  color: white;
+}
+
+.material-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.material-item {
+  background: #444;
+  padding: 10px 15px;
+  border-radius: 8px;
+  cursor: pointer;
+  user-select: none;
+  flex: 0 1 calc(33.333% - 10px);
+  text-align: center;
+  transition: background 0.3s;
+}
+
+.material-item:hover {
+  background: #666;
+}
+
+    </style>
   </head>
   <body>
     <div class="container">
       <div class="canvas-wrapper">
         <canvas id="mainCanvas"></canvas>
       </div>
-      <div class="material-panel" id="materialPanel">
-        <div class="material-list">
-          <div class="brush-size">
-  <label for="brushRange">Brush Size: <span id="brushValue">1</span></label>
-  <input type="range" id="brushRange" min="1" max="10" value="1" />
-</div>
+ <!-- Trigger Button -->
+<button id="materialToggle" class="material-toggle">Materials</button>
 
-          <div class="material-item">Acid</div>
-          <div class="material-item">Alcohol</div>
-          <div class="material-item">Bee</div>
-          <div class="material-item">Bomb</div>
-          <div class="material-item">Coal</div>
-          <div class="material-item">Coal Powder</div>
-             <div class="material-item">Corrupt</div>
-          <div class="material-item">Dirt</div>
-          <div class="material-item">Electric</div>
-          <div class="material-item">Fire</div>
-          <div class="material-item">Firefly</div>
-          <div class="material-item">Fireworks</div>
-          <div class="material-item">Gas</div>
-          <div class="material-item">Gunpowder</div>
-          <div class="material-item">Ice</div>
-          <div class="material-item">Lava</div>
-          <div class="material-item">Metal</div>
-          <div class="material-item">Nuclear Bomb</div>
-          <div class="material-item">Obsidian</div>
-          <div class="material-item">Plant</div>
-          <div class="material-item">Plasma</div>
-          <div class="material-item">Salt</div>
-          <div class="material-item">Sand</div>
-          <div class="material-item">Seed</div>
-          <div class="material-item">Smoke</div>
-          <div class="material-item">Snow</div>
-          <div class="material-item">Steam</div>
-          <div class="material-item">Stone</div>
-          <div class="material-item">Water</div>
-          <div class="material-item">Wood</div>
-        </div>
-      </div>
+<!-- Material Modal -->
+<div id="materialModal" class="material-modal">
+  <div class="material-content">
+    <div class="brush-size">
+      <label for="brushRange">Brush Size: <span id="brushValue">1</span></label>
+      <input type="range" id="brushRange" min="1" max="10" value="1" />
     </div>
+
+    <div class="material-list">
+      <div class="material-item">Acid</div>
+      <div class="material-item">Alcohol</div>
+      <div class="material-item">Bee</div>
+      <div class="material-item">Bomb</div>
+      <div class="material-item">Coal</div>
+      <div class="material-item">Coal Powder</div>
+      <div class="material-item">Corrupt</div>
+      <div class="material-item">Dirt</div>
+      <div class="material-item">Electric</div>
+      <div class="material-item">Fire</div>
+      <div class="material-item">Firefly</div>
+      <div class="material-item">Fireworks</div>
+      <div class="material-item">Gas</div>
+      <div class="material-item">Gunpowder</div>
+      <div class="material-item">Ice</div>
+      <div class="material-item">Lava</div>
+      <div class="material-item">Metal</div>
+      <div class="material-item">Nuclear Bomb</div>
+      <div class="material-item">Obsidian</div>
+      <div class="material-item">Plant</div>
+      <div class="material-item">Plasma</div>
+      <div class="material-item">Salt</div>
+      <div class="material-item">Sand</div>
+      <div class="material-item">Seed</div>
+      <div class="material-item">Smoke</div>
+      <div class="material-item">Snow</div>
+      <div class="material-item">Steam</div>
+      <div class="material-item">Stone</div>
+      <div class="material-item">Water</div>
+      <div class="material-item">Wood</div>
+    </div>
+  </div>
+</div>
 
     <script src="javascript.js"></script>
 
     <script>
+        const toggleBtn = document.getElementById('materialToggle');
+  const modal = document.getElementById('materialModal');
+
+  toggleBtn.addEventListener('click', () => {
+    modal.classList.toggle('active');
+  });
+
+  // Optional: close modal when clicking outside content
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) {
+      modal.classList.remove('active');
+    }
+  });
       let brushSize = 1;
 const brushSlider = document.getElementById("brushRange");
 const brushValue = document.getElementById("brushValue");

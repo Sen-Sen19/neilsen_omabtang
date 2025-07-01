@@ -1,0 +1,151 @@
+html, body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  font-family: 'Segoe UI', sans-serif;
+  background: #111;
+}
+
+canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 0;
+  display: block;
+  background: #3b3b3b;
+  width: 100vw;
+  height: auto; /* Let JS control height */
+}
+
+.gui {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 80px;
+  background: rgba(0, 0, 0, 0.7);
+  z-index: 10;
+}
+
+/* Material Icon - Centered */
+.circle-button {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  border: none;
+  background: #444;
+  color: white;
+  font-size: 24px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.circle-button:hover {
+  background: #666;
+}
+
+/* Brush Size - Right */
+.brush-size {
+  position: absolute;
+  right: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: white;
+  font-size: 14px;
+}
+
+input[type="range"] {
+  width: 150px;
+  max-width: 30vw;
+}
+
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.6);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+}
+
+.modal-content {
+  background: #222;
+  padding: 20px;
+  border-radius: 12px;
+  width: 95%;
+  max-width: 600px;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 0 20px rgba(0,0,0,0.5);
+  -webkit-overflow-scrolling: touch;
+}
+
+.material-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 10px;
+}
+
+.material-item {
+  background: #333;
+  color: white;
+  padding: 14px 10px;
+  border-radius: 8px;
+  text-align: center;
+  cursor: pointer;
+  transition: background 0.2s;
+  font-size: 16px;
+}
+
+.material-item:hover {
+  background: #555;
+}
+
+.material-emoji {
+  font-size: 28px;
+  display: block;
+  margin-bottom: 6px;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 600px) {
+  .circle-button {
+    width: 50px;
+    height: 50px;
+    font-size: 20px;
+  }
+
+  .brush-size {
+    right: 10px;
+    font-size: 12px;
+    gap: 6px;
+  }
+
+  input[type="range"] {
+    width: 100px;
+  }
+
+  .material-item {
+    font-size: 14px;
+    padding: 12px 8px;
+  }
+
+  .material-emoji {
+    font-size: 24px;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
