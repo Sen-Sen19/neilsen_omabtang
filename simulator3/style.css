@@ -25,14 +25,22 @@ canvas {
   height: 80px;
   background: rgba(0, 0, 0, 0.7);
   z-index: 10;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 20px;
 }
 
-/* Material Icon - Centered */
+.tool-buttons,
+.material-toggle,
+.brush-size {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Button Style */
 .circle-button {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
   width: 60px;
   height: 60px;
   border-radius: 50%;
@@ -42,21 +50,17 @@ canvas {
   font-size: 24px;
   cursor: pointer;
   transition: background 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .circle-button:hover {
   background: #666;
 }
 
-/* Brush Size - Right */
+
 .brush-size {
-  position: absolute;
-  right: 20px;
-  top: 50%;
-  transform: translateY(-50%);
-  display: flex;
-  align-items: center;
-  gap: 10px;
   color: white;
   font-size: 14px;
 }
@@ -66,6 +70,7 @@ input[type="range"] {
   max-width: 30vw;
 }
 
+/* Modal Styles */
 .modal {
   position: fixed;
   top: 0;
@@ -84,12 +89,27 @@ input[type="range"] {
   padding: 20px;
   border-radius: 12px;
   width: 95%;
+   border: 2px solid #ffffff;
   max-width: 600px;
   max-height: 80vh;
   overflow-y: auto;
-  box-shadow: 0 0 20px rgba(0,0,0,0.5);
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
   -webkit-overflow-scrolling: touch;
 }
+#materialToggle {
+  background: linear-gradient(to bottom right, #ffffff, #006df3);
+  width: 60px;
+  height: 60px;
+  color: white;
+  font-size: 36px;
+  border-radius: 50%;
+  box-shadow: 0 0 10px rgba(0, 195, 255, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+
 
 .material-grid {
   display: grid;
@@ -118,7 +138,7 @@ input[type="range"] {
   margin-bottom: 6px;
 }
 
-/* Mobile Responsiveness */
+
 @media (max-width: 600px) {
   .circle-button {
     width: 50px;
@@ -127,7 +147,6 @@ input[type="range"] {
   }
 
   .brush-size {
-    right: 10px;
     font-size: 12px;
     gap: 6px;
   }
@@ -145,6 +164,7 @@ input[type="range"] {
     font-size: 24px;
   }
 }
+
 
 * {
   box-sizing: border-box;

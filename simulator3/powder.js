@@ -31,13 +31,17 @@ const powderMaterials = {
     },
     speed: 1
   },
-  Snow: {
-    color: () => {
-      const c = 240 + rand(0, 15);
-      return `rgb(${c}, ${c}, ${c})`;
-    },
-    speed: 1
+Snow: {
+  color: () => {
+    const r = 200 + rand(-10, 5);  // slight red
+    const g = 220 + rand(-5, 10);  // keep green bright
+    const b = 255;                 // max blue
+    return `rgb(${r}, ${g}, ${b})`;
   },
+  speed: 1
+}
+
+,
   Fireworks: {
     color: () => {
       const colors = ["#f00", "#0f0", "#00f", "#ff0", "#0ff", "#f0f", "#fff"];
