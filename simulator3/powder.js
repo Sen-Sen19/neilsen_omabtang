@@ -1,3 +1,4 @@
+
 const powderMaterials = {
   Coal: {
     color: () => {
@@ -6,12 +7,16 @@ const powderMaterials = {
     },
     speed: 1
   },
-  Dirt: {
-    color: () => {
-      return `rgb(${110 + rand(-10, 10)}, ${100 + rand(-10, 10)}, ${50 + rand(-5, 5)})`;
-    },
-    speed: 1
+Dirt: {
+  color: () => {
+    const r = 90 + rand(-10, 10);   // deep brown
+    const g = 80 + rand(-10, 10);   // muted
+    const b = 50 + rand(-10, 10);   // grounded
+    return `rgb(${r}, ${g}, ${b})`;
   },
+  speed: 1
+}
+,
   Gunpowder: {
     color: () => {
       const shade = 100 + rand(-15, 15);
@@ -39,9 +44,7 @@ Snow: {
     return `rgb(${r}, ${g}, ${b})`;
   },
   speed: 1
-}
-
-,
+},
   Fireworks: {
     color: () => {
       const colors = ["#f00", "#0f0", "#00f", "#ff0", "#0ff", "#f0f", "#fff"];

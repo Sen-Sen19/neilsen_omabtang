@@ -17,13 +17,18 @@ Ice: {
   solid: true
 },
 
-  Metal: {
-    color: () => {
-      const shade = 120 + rand(-20, 20);
-      return `rgb(${shade}, ${shade}, ${shade})`;
-    },
-    solid: true
+Metal: {
+  color: () => {
+    const shade = 160 + rand(-15, 15); // neutral gray base
+    const r = shade + rand(-5, 5);
+    const g = shade + rand(-5, 5);
+    const b = shade + rand(0, 10); // slight cool tint
+    return `rgb(${r}, ${g}, ${b})`;
   },
+  glow: false,
+  solid: true
+},
+
   Obsidian: {
     color: () => {
       return `rgb(${20 + rand(0, 10)}, ${10 + rand(0, 5)}, ${30 + rand(0, 20)})`;

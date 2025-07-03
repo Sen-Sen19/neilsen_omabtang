@@ -11,6 +11,12 @@ const activeNukes = [];
 const insects = [];
 const trailParticles = [];
 const fireParticles = []; 
+const toxicSmokeParticles = [];
+let lastSprinkleTime = 0;
+const SPRINKLE_COOLDOWN = 50; // ms
+const SPRINKLE_CHANCE = 0.1;  // 10% chance per pixel
+
+
 let cols, rows;
 
 function resizeCanvas() {
@@ -100,8 +106,63 @@ function setupModalListeners() {
   }
 }
 function spawnMaterial(x, y) {
-  const cx = Math.floor(x / gridSize);
-  const cy = Math.floor(y / gridSize);
+  const gridX = Math.floor(x / gridSize);
+  const gridY = Math.floor(y / gridSize);
+if (selectedMaterial === "Seed") {
+  const now = performance.now();
+  const sprinkleAttempts = 20;
+  for (let i = 0; i < sprinkleAttempts; i++) {
+    const dx = rand(-brushSize, brushSize);
+    const dy = rand(-brushSize, brushSize);
+    const nx = gridX + dx;
+    const ny = gridY + dy;
+
+    if (nx < 0 || nx >= cols || ny < 0 || ny >= rows) continue;
+    if (grid[ny][nx] !== null) continue;
+
+  if (Math.random() < SPRINKLE_CHANCE) {
+  grid[ny][nx] = {
+    type: "Seed",
+    spawnedAt: now,
+    lastMovedAt: now,
+    color: powderMaterials["Seed"].color()  // assign fixed color
+  };
+}
+
+  }
+  return;
+}
+
+  if (
+    gridX < 0 || gridX >= cols || 
+    gridY < 0 || gridY >= rows || 
+    !selectedMaterial
+  ) return;
+
+  // ✨ Handle Seeds with sprinkle logic
+   // ✨ Handle sprinkled materials
+  const sprinkledTypes = ["Seed", "Snow", "Fireworks"];
+  if (sprinkledTypes.includes(selectedMaterial)) {
+    const now = performance.now();
+    if (now - lastSprinkleTime < SPRINKLE_COOLDOWN) return;
+    lastSprinkleTime = now;
+ const sprinkleAttempts = 5;
+     for (let i = 0; i < sprinkleAttempts; i++) {
+    const dx = Math.floor(rand(-brushSize, brushSize));
+    const dy = Math.floor(rand(-brushSize, brushSize));
+    const nx = gridX + dx;
+    const ny = gridY + dy;
+
+    if (nx < 0 || nx >= cols || ny < 0 || ny >= rows) continue;
+    if (grid[ny][nx] !== null) continue;
+
+    if (Math.random() < SPRINKLE_CHANCE) {
+      grid[ny][nx] = selectedMaterial;
+    }
+  }
+
+  return;
+}
 
   // 🐝 Insects
   if (selectedMaterial === "Bee" || selectedMaterial === "Firefly" || selectedMaterial === "Butterfly") {
@@ -110,6 +171,8 @@ function spawnMaterial(x, y) {
   }
 
   // 💣 Bombs / Nukes (one-time spawn)
+  const cx = gridX;
+  const cy = gridY;
   if (selectedMaterial === "Bomb" || selectedMaterial === "Nuclear Bomb") {
     if (hasSpawnedSingleMaterial) return;
     if (cx >= 0 && cx < cols && cy >= 0 && cy < rows && grid[cy][cx] === null) {
@@ -126,19 +189,18 @@ function spawnMaterial(x, y) {
   }
 
   // 🔥 Fire — ephemeral, burns while drawing only
-if (selectedMaterial === "Fire") {
-  for (let dy = -brushSize; dy <= brushSize; dy++) {
-    for (let dx = -brushSize; dx <= brushSize; dx++) {
-      if (Math.random() < 0.9) { // Denser effect
-        const nx = x + dx * gridSize + rand(-2, 2);
-        const ny = y + dy * gridSize + rand(-2, 2);
-        fireParticles.push(new FireParticle(nx, ny));
+  if (selectedMaterial === "Fire") {
+    for (let dy = -brushSize; dy <= brushSize; dy++) {
+      for (let dx = -brushSize; dx <= brushSize; dx++) {
+        if (Math.random() < 0.9) { // Denser effect
+          const nx = x + dx * gridSize + rand(-2, 2);
+          const ny = y + dy * gridSize + rand(-2, 2);
+          fireParticles.push(new FireParticle(nx, ny));
+        }
       }
     }
+    return;
   }
-  return;
-}
-
 
 
 
@@ -491,20 +553,19 @@ class GasParticle {
   }
 
   draw(ctx) {
-    ctx.beginPath();
-    const alpha = Math.max(0, Math.min(1, this.life / 100));
-    if (this.type === "Gas") {
-      ctx.fillStyle = `rgba(180,255,180,${alpha * 0.2})`;
-    } else if (this.type === "Steam") {
-      ctx.fillStyle = `rgba(200,200,255,${alpha * 0.25})`;
-    }
+  const gradient = ctx.createRadialGradient(
+    this.x, this.y, 0,
+    this.x, this.y, this.size
+  );
 
-    ctx.arc(this.x * gridSize, this.y * gridSize, this.radius, 0, Math.PI * 2);
-    ctx.shadowColor = ctx.fillStyle;
-    ctx.shadowBlur = 4;
-    ctx.fill();
-    ctx.shadowBlur = 0;
-  }
+  gradient.addColorStop(0, `rgba(180, 255, 180, ${this.opacity * 0.2})`);
+  gradient.addColorStop(1, `rgba(80, 255, 120, 0)`);
+
+  ctx.fillStyle = gradient;
+  ctx.beginPath();
+  ctx.arc(this.x, this.y, this.size * 1.2, 0, Math.PI * 2); // slightly larger puff
+  ctx.fill();
+}
 
   isAlive() {
     return this.life > 0;
@@ -683,10 +744,60 @@ function getComputedStyleColor(colorName) {
 }
 
 
+// ============================ Toxic Gas Particle ============================
+class ToxicSmokeParticle {
+  constructor(x, y) {
+    this.x = x * gridSize + gridSize / 2;
+    this.y = y * gridSize + gridSize / 2;
+
+    this.vx = (Math.random() - 0.5) * 0.5;
+this.vy = -Math.random() * 0.1;
+   this.life = this.maxLife = 60; // 2 seconds
+
+    this.size = Math.random() * 6 + 6; // larger mist
+    this.opacity = 1.0;
+    this.wobble = Math.random() * Math.PI * 2;
+  }
+
+update() {
+  this.x += this.vx + Math.sin(this.wobble) * 0.1;
+  this.y += this.vy;
+  this.life--;
+  if (this.life < 0) this.life = 0;
+  this.opacity = Math.max(0, Math.pow(this.life / this.maxLife, 1.8));
+  this.wobble += 0.1;
+}
+
+  isAlive() {
+    return this.life > 0;
+  }
+
+  draw(ctx) {
+    const gradient = ctx.createRadialGradient(
+      this.x, this.y, 0,
+      this.x, this.y, this.size
+    );
+
+    gradient.addColorStop(0, `rgba(150,255,180,${this.opacity * 0.6})`);
+    gradient.addColorStop(1, `rgba(50,120,60,0)`);
+
+    ctx.fillStyle = gradient;
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+    ctx.fill();
+    
+  }
+}
+
 
 // ================================================================= Functions =================================================================
 // ============================ Explosives ============================
-let nukeFlashAlpha = 0; // <- Add this globally
+let nukeFlashAlpha = 0; 
+const explosionRadii = {
+  "Bomb": 30,          // 🔴 Red bomb explosion radius
+  "Nuclear Bomb": 40   // ⚪ White nuke explosion radius
+};
+
 function updateExplosives() {
  for (let y = rows - 1; y >= 0; y--) {
 
@@ -706,8 +817,9 @@ function updateExplosives() {
           cell.life--;
 
           if (cell.life <= 0) {
-            const radius = cell.type === "Bomb" ? 6 : 12;
-            const color = cell.type === "Bomb" ? "red" : "green";
+            const radius = cell.type === "Bomb" ? 20 : 40; 
+           const color = cell.type === "Bomb" ? "red" : "white";
+
 
             explode(x, y, radius, color);
             grid[y][x] = null;
@@ -718,10 +830,9 @@ function updateExplosives() {
   }
 }
 
-
-
 function explode(cx, cy, radius, color) {
-  const isNuke = color === "green";
+const isNuke = color === "white";
+
   if (isNuke) nukeFlashAlpha = 1;
 
   // Destroy blocks & emit particles
@@ -732,44 +843,64 @@ function explode(cx, cy, radius, color) {
       if (nx < 0 || ny < 0 || nx >= cols || ny >= rows) continue;
 
       const dist = Math.sqrt(dx * dx + dy * dy);
-      if (dist <= radius + Math.random() * 1.5) { // Distort shape
+      if (dist <= radius + Math.random() * 1.5) {
         grid[ny][nx] = null;
 
-        // Particles
         const particleCount = isNuke ? 4 : 2;
-        for (let i = 0; i < particleCount; i++) {
-          const px = nx + Math.random();
-          const py = ny + Math.random();
-          particleSpatters.push(new LavaSpitParticle(px, py));
-        }
+       if (toxicSmokeParticles.length > 500) return; // prevent overload
+if (Math.random() < 0.5) { // 50% chance to emit
+  const px = nx + Math.random();
+  const py = ny + Math.random();
+  particleSpatters.push(new LavaSpitParticle(px, py));
+}
+
       }
     }
   }
 
-  // 🔥 Smoke cloud (distorted)
-  if (isNuke) {
-    let smokeDuration = 600;
-    const spreadRange = radius + 3;
 
-    const interval = setInterval(() => {
-      smokeDuration--;
-      if (smokeDuration <= 0) return clearInterval(interval);
+  // ☣️ Toxic Smoke cloud (green)
 
-      for (let i = 0; i < 25; i++) {
-        const angle = Math.random() * Math.PI * 2;
-        const dist = rand(0, spreadRange) + Math.sin(Date.now() * 0.01 + i) * 1.5;
-        const sx = Math.floor(cx + Math.cos(angle) * dist);
-        const sy = Math.floor(cy + Math.sin(angle) * dist);
+if (isNuke) {
+  let smokeDuration = 100; // shorter lifespan (~10 seconds)
+  const spreadRange = radius + 3;
 
-        if (sx >= 0 && sx < cols && sy >= 0 && sy < rows && grid[sy][sx] === null) {
-          gasParticles.push(new GasParticle(sx, sy, "Gas"));
-        }
-      }
-    }, 100);
-  }
+  const interval = setInterval(() => {
+    if (smokeDuration-- <= 0) {
+      clearInterval(interval);
+      return;
+    }
+
+   for (let i = 0; i < 5; i++) {
+if (toxicSmokeParticles.length > 800) {
+  clearInterval(interval);
+  return;
 }
 
 
+      const angle = Math.random() * Math.PI * 2;
+      const dist = rand(0, spreadRange) + Math.sin(Date.now() * 0.01 + i) * 1.5;
+      const sx = Math.floor(cx + Math.cos(angle) * dist);
+      const sy = Math.floor(cy + Math.sin(angle) * dist);
+
+      if (sx >= 0 && sx < cols && sy >= 0 && sy < rows && grid[sy][sx] === null) {
+        toxicSmokeParticles.push(new ToxicSmokeParticle(sx, sy));
+      }
+    }
+  }, 100); // spawns every 100ms for 100 ticks = ~10 seconds
+}
+
+
+}
+
+function updateToxicSmoke() {
+  for (let i = toxicSmokeParticles.length - 1; i >= 0; i--) {
+    toxicSmokeParticles[i].update();
+    if (!toxicSmokeParticles[i].isAlive()) {
+      toxicSmokeParticles.splice(i, 1); // 💀 Remove dead smoke
+    }
+  }
+}
 
 
 // ============================ Gas ============================
@@ -985,6 +1116,111 @@ function getMaterialColor(type, x, y) {
   return mat.color;
 }
 
+// ============================Seed============================
+const MAX_PLANTS = 300;
+const MAX_PLANT_HEIGHT = 5;
+let grownPlantCount = 0;
+
+// Seed growth + vertical spread
+function updateSeeds() {
+  const radius = Math.floor(200 / gridSize);
+
+  for (let y = 0; y < rows - 1; y++) {
+    for (let x = 0; x < cols; x++) {
+      const cell = grid[y][x];
+      if (!cell || cell.type !== "Seed") continue;
+
+      const below = y + 1;
+      if (grid[below]?.[x] !== "Dirt") continue;
+
+      // Check nearby water
+      let foundWater = false;
+      for (let dy = -radius; dy <= radius && !foundWater; dy++) {
+        for (let dx = -radius; dx <= radius; dx++) {
+          const nx = x + dx;
+          const ny = y + dy;
+          if (
+            nx >= 0 && nx < cols &&
+            ny >= 0 && ny < rows &&
+            grid[ny][nx] === "Water"
+          ) {
+            foundWater = true;
+            break;
+          }
+        }
+      }
+
+      if (!foundWater || grownPlantCount >= MAX_PLANTS) continue;
+
+      // Grow into Grass or Flower
+      const growType = Math.random() < 0.7 ? "Grass" : "Flower";
+      grid[y][x] = growType;
+      grownPlantCount++;
+
+      // Vertical growth
+      for (let h = 1; h <= MAX_PLANT_HEIGHT; h++) {
+        const upY = y - h;
+        if (upY < 0) break;
+        if (grid[upY][x] === null) {
+          if (Math.random() < 0.6) {
+            grid[upY][x] = growType;
+            grownPlantCount++;
+          }
+        } else {
+          break;
+        }
+      }
+    }
+  }
+}
+
+// Spawn seed as object with timestamps
+function spawnSeed(x, y) {
+  if (x < 0 || x >= cols || y < 0 || y >= rows) return;
+  if (grid[y][x] === null || grid[y][x] === undefined) {
+    grid[y][x] = {
+      type: "Seed",
+      spawnedAt: performance.now(),
+      lastMovedAt: performance.now(),
+    };
+  }
+}
+
+// Seeds fall down if empty cell below
+function updateFallingSeeds() {
+  for (let y = rows - 2; y >= 0; y--) {  // bottom up
+    for (let x = 0; x < cols; x++) {
+      const cell = grid[y][x];
+      if (cell && cell.type === "Seed") {
+        const belowCell = grid[y + 1]?.[x];
+        if (belowCell === null || belowCell === undefined) {
+          grid[y + 1][x] = cell;    // fall down
+          grid[y][x] = null;        // vacate old spot
+          cell.lastMovedAt = performance.now();
+        }
+      }
+    }
+  }
+}
+
+// Remove seeds older than 5 seconds
+function removeOldSeeds() {
+  const now = performance.now();
+  const lifespan = 5000; // 5 seconds
+
+  for (let y = 0; y < rows; y++) {
+    for (let x = 0; x < cols; x++) {
+      const cell = grid[y][x];
+      if (cell && cell.type === "Seed") {
+        if (now - cell.spawnedAt > lifespan) {
+          console.log(`Removing seed at (${x},${y}) after ${(now - cell.spawnedAt).toFixed(0)}ms`);
+          grid[y][x] = null;
+        }
+      }
+    }
+  }
+}
+
 // ================================================================= Draw =================================================================
 
 function draw() {
@@ -1009,13 +1245,17 @@ for (let i = trailParticles.length - 1; i >= 0; i--) {
     p.draw(ctx);
   }
 }
+ ctx.fillStyle = "lime";
+  ctx.font = "12px monospace";
+  ctx.fillText(`☣️ Toxic: ${toxicSmokeParticles.length}`, 10, 20);
 
 
- if (nukeFlashAlpha > 0) {
-    ctx.fillStyle = `rgba(0, 255, 150, ${nukeFlashAlpha})`;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    nukeFlashAlpha -= 0.05;
-  }
+if (nukeFlashAlpha > 0) {
+  ctx.fillStyle = `rgba(255,255,255,${nukeFlashAlpha})`;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  nukeFlashAlpha -= 0.02; // fade out
+}
+
 
   for (let y = 0; y < rows; y++) {
     for (let x = 0; x < cols; x++) {
@@ -1024,6 +1264,17 @@ for (let i = trailParticles.length - 1; i >= 0; i--) {
      const matType = typeof cell === "string" ? cell : cell.type;
 const mat = materials[matType];
 if (!mat) continue;
+const flowerColors = ["#FF69B4", "#FFD700", "#DA70D6", "#87CEEB"];
+
+materials["Grass"] = {
+  name: "Grass",
+  color: () => "green"
+};
+
+materials["Flower"] = {
+  name: "Flower",
+  color: () => flowerColors[Math.floor(Math.random() * flowerColors.length)]
+};
 
 let color =
   typeof cell === "string"
@@ -1130,6 +1381,15 @@ CanvasRenderingContext2D.prototype.roundRect = function (x, y, w, h, r) {
   particleSpatters.forEach((p) => p.draw(ctx));
   acidBubbles.forEach((p) => p.draw(ctx));
   acidFog.forEach((p) => p.draw(ctx)); 
+for (let i = toxicSmokeParticles.length - 1; i >= 0; i--) {
+  const p = toxicSmokeParticles[i];
+  if (p.isAlive()) {
+    p.draw(ctx);
+  } else {
+    toxicSmokeParticles.splice(i, 1); // extra safety
+  }
+}
+
 
   for (const p of particleSpatters) {
     ctx.beginPath();
@@ -1172,11 +1432,17 @@ CanvasRenderingContext2D.prototype.roundRect = function (x, y, w, h, r) {
 function update() {
   updateLiquids();
   updatePowders();
+  updateSeeds();      
   updateGases();
   updateGasParticles();
+  updateToxicSmoke(); 
   updateExplosives();
-  updateFire(); // 🔥 Add this
+  updateFire();
+   removeOldSeeds();
+   updateFallingSeeds();
 }
+
+
 function updateFire() {
   for (let y = rows - 1; y >= 0; y--) {
     for (let x = 0; x < cols; x++) {
@@ -1213,6 +1479,7 @@ function loop() {
   for (let i = insects.length - 1; i >= 0; i--) {
     if (insects[i].life <= 0) insects.splice(i, 1);
   }
+
 
   insects.forEach(insect => insect.update());
   draw();
