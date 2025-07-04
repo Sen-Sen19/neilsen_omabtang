@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Car Arena - Combat Royale</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.15.0/dist/tf.min.js"></script>
+
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body {
+      height: 100%; background-color: #111;
+      font-family: sans-serif; overflow: hidden;
+    }
+    .container {
+      display: flex; flex-direction: column; height: 100%;
+    }
+    canvas {
+      flex: 1; border: 4px solid white; display: block;
+      width: 100%; background: #fff;
+    }
+    .gui {
+      background: #000; padding: 10px; color: white;
+      display: flex; justify-content: space-between;
+      align-items: center; flex-wrap: wrap; border-top: 2px solid white;
+  
+    }
+   
+    .gui button:hover { background: #444; }
+    #leaderboard { flex: 1 1 300px; min-width: 250px; }
+
+    
+
+    #chart {
+  width: 300px;
+  height: 150px;
+  background: #fff;
+}
+
+
+    #top-ui {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  right: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 20px;
+  pointer-events: none;
+  z-index: 10;
+}
+#top-ui button {
+  pointer-events: auto;
+  font-weight: bold;
+  padding: 6px 12px;
+  background: #222;
+  color: white;
+  border: 2px solid lime;
+  border-radius: 6px;
+  cursor: pointer;
+}
+#top-ui button:hover {
+  background: #444;
+}
+#simTimer {
+  color: black;
+  font-family: monospace;
+  font-size: 16px;
+  pointer-events: auto;
+}
+
+  </style>
+</head>
+<body>
+  <div id="top-ui">
+  <button id="resetBrainBtn">🧠 Reset Brain</button>
+  <div id="simTimer">⏱ 00:00</div>
+</div>
+
+<div class="container">
+  <canvas id="mainCanvas"></canvas>
+  <div class="gui">
+    <div id="leaderboard"></div>
+    <canvas id="chart" width="300" height="150"></canvas>
+  </div>
+</div>
+
+  <script>
+
+
+
+
+// (async () => {
+//   await tf.io.removeModel('localstorage://best-brain');
+//   console.log('🧠 Old best-brain wiped!');
+// })();
+let simStart = localStorage.getItem('simStart');
+if (!simStart) {
+  simStart = Date.now();
+  localStorage.setItem('simStart', simStart);
+} else {
+  simStart = parseInt(simStart);
+}
+
+
+setInterval(() => {
+  const elapsed = Math.floor((Date.now() - simStart) / 1000);
+  const mins = String(Math.floor(elapsed / 60)).padStart(2, '0');
+  const secs = String(elapsed % 60).padStart(2, '0');
+  document.getElementById('simTimer').textContent = `⏱ ${mins}:${secs}`;
+}, 1000);
+document.getElementById('resetBrainBtn').addEventListener('click', async () => {
+  await tf.io.removeModel('localstorage://best-brain');
+  localStorage.removeItem('simStart');
+  localStorage.removeItem('carScores'); // 🧼 Clear scores
+  alert('🧠 Brain wiped! Reloading...');
+  location.reload();
+});
+
+setInterval(() => {
+  const scores = cars.map(c => ({
+    name: c.name,
+    color: c.color,
+    points: c.points
+  }));
+  localStorage.setItem('carScores', JSON.stringify(scores));
+}, 5000); // Save every 5s
+
+const bombs = [];
+const goos = [];
+const wills = []; 
+const chains = [];
+
+    const canvas = document.getElementById("mainCanvas");
+    const ctx = canvas.getContext("2d");
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight - document.querySelector(".gui").offsetHeight;
+
+    const CAR_COUNT = 5;
+    const cars = [];
+    const pastelColors = [
+      '#FFB3BA', '#FFDFBA', '#FFFFBA', '#BAFFC9', '#BAE1FF',
+      '#D7BAFF', '#FFBAD9', '#B9FBC0', '#FBFACD', '#CBAACB'
+    ];
+
+    const lastHitTimestamps = new WeakMap();
+
+function createBrain() {
+  const model = tf.sequential();
+  model.add(tf.layers.dense({ inputShape: [3], units: 8, activation: 'relu' }));
+  // 6 outputs: [steer, speed, goo, bomb, flicker, sprint]
+model.add(tf.layers.dense({ units: 8, activation: 'tanh' }));
+
+  return model;
+}
+
+class Car {
+  constructor(name, color) {
+    this.name = name;
+    this.color = color;
+    this.x = Math.random() * canvas.width;
+    this.y = Math.random() * canvas.height;
+    this.angle = Math.random() * Math.PI * 2;
+    this.hp = 3;
+    this.points = 0;
+    this.model = createBrain();
+    this.speed = 2;
+    this.lastHit = 0;
+this.cooldowns = {
+  flicker: 0,
+  goo: 0,
+  bomb: 0,
+  sprint: 0,
+  will: 0,    
+  chain: 0    
+
+
+};
+this.status = {
+  slowedUntil: 0,
+  stunnedUntil: 0
+};
+
+this.status = {
+  slowedUntil: 0,
+  stunnedUntil: 0,
+  sprintingUntil: 0
+};
+
+  }
+update() {
+  const now = Date.now(); // ✅ Only declare once
+
+  const dx = food.x - this.x;
+  const dy = food.y - this.y;
+  const angleToFood = Math.atan2(dy, dx) - this.angle;
+  const input = tf.tensor2d([[dx / canvas.width, dy / canvas.height, Math.sin(angleToFood)]]);
+  const output = this.model.predict(input).dataSync();
+const steer = output[0];
+const speedFactor = (output[1] + 1) / 2;
+const useGoo = output[2] > 0.8;
+const useBomb = output[3] > 0.8;
+const useFlicker = output[4] > 0.8;
+const useSprint = output[5] > 0.8;
+
+// Add:
+const useWill = output[6] > 0.8;
+const useChain = output[7] > 0.8;
+
+// Then call:
+if (useGoo) this.shootGoo();
+if (useBomb) this.plantBomb();
+if (useFlicker) this.flicker();
+if (useSprint) this.sprint();
+if (useWill) this.willShot();        // 🆕
+if (useChain) this.chainBlast();     // 🆕
+
+
+
+  if (this.status.stunnedUntil > now) return; // Can't move if stunned
+  const isSlowed = this.status.slowedUntil > now;
+const isSprinting = this.status.sprintingUntil > now;
+const speedMod = isSlowed ? 0.3 : (isSprinting ? 3 : 1);
+
+
+  this.angle += steer * 0.2;
+  this.x += Math.cos(this.angle) * this.speed * speedFactor * speedMod;
+  this.y += Math.sin(this.angle) * this.speed * speedFactor * speedMod;
+
+  if (getDistance(this, food) < 20) {
+    this.points++;
+    food = spawnFood();
+    
+  }
+
+  this.x = Math.max(0, Math.min(canvas.width, this.x));
+  this.y = Math.max(0, Math.min(canvas.height, this.y));
+
+  // Weapon collision logic
+  for (const other of cars) {
+    if (other !== this && now - this.lastHit > 3000) {
+      const wx = this.x + Math.cos(this.angle) * 15;
+      const wy = this.y + Math.sin(this.angle) * 15;
+      const dist = getDistance({ x: wx, y: wy }, other);
+
+      if (dist < 10) {
+        other.hp--;
+        this.lastHit = now;
+
+        if (other.hp <= 0) {
+          other.points = Math.max(0, other.points - 1);
+          other.hp = 3;
+          other.x = Math.random() * canvas.width;
+          other.y = Math.random() * canvas.height;
+        }
+      }
+    }
+  }
+}
+
+flicker() {
+  const now = Date.now();
+  if (now > this.cooldowns.flicker) {
+    this.x += Math.cos(this.angle) * 100;
+    this.y += Math.sin(this.angle) * 100;
+    this.cooldowns.flicker = now + 10000;
+  }
+}
+
+shootGoo() {
+  const now = Date.now();
+  if (now > this.cooldowns.goo) {
+    goos.push({
+      x: this.x + Math.cos(this.angle) * 15,
+      y: this.y + Math.sin(this.angle) * 15,
+      angle: this.angle,
+      shooter: this,
+      createdAt: now
+    });
+    this.cooldowns.goo = now + 20000;
+  }
+}
+sprint() {
+  const now = Date.now();
+  if (now > this.cooldowns.sprint) {
+    this.status.sprintingUntil = now + 5000;
+    this.cooldowns.sprint = now + 15000;
+  }
+}
+
+plantBomb() {
+  const now = Date.now();
+  if (now > this.cooldowns.bomb) {
+    bombs.push({
+      x: this.x,
+      y: this.y,
+      owner: this,
+      plantedAt: now
+    });
+    this.cooldowns.bomb = now + 20000;
+  }
+}
+willShot() {
+  const now = Date.now();
+  if (now > this.cooldowns.will) {
+    wills.push({
+      x: this.x + Math.cos(this.angle) * 15,
+      y: this.y + Math.sin(this.angle) * 15,
+      angle: this.angle,
+      shooter: this,
+      createdAt: now
+    });
+    this.cooldowns.will = now + 30000; // 30s
+  }
+}
+chainBlast() {
+  const now = Date.now();
+  if (now > this.cooldowns.chain) {
+    let nearby = cars.filter(c => c !== this && getDistance(this, c) < 60);
+    if (nearby.length >= 1) {
+      if (nearby.length >= 2) {
+        chains.push({
+          carA: nearby[0],
+          carB: nearby[1],
+          until: now + 2000
+        });
+      } else {
+        nearby[0].status.slowedUntil = now + 2000;
+      }
+    }
+    this.cooldowns.chain = now + 20000;
+  }
+}
+
+
+
+draw() {
+  ctx.save();
+  ctx.translate(this.x, this.y);
+  ctx.rotate(this.angle);
+
+  // If slowed, glow or aura
+  if (this.status.slowedUntil > Date.now()) {
+    ctx.strokeStyle = '#39FF14';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(0, 0, 15, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+if (this.status.sprintingUntil > Date.now()) {
+  ctx.strokeStyle = 'lime';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(this.x, this.y, 14, 0, Math.PI * 2);
+  ctx.stroke();
+}
+
+  // Car body
+  ctx.fillStyle = this.color;
+  ctx.beginPath();
+  ctx.arc(0, 0, 10, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Weapon direction
+  ctx.strokeStyle = 'red';
+  ctx.beginPath();
+  ctx.moveTo(0, 0);
+  ctx.lineTo(15, 0);
+  ctx.stroke();
+
+  ctx.restore();
+
+  // Name above car
+  ctx.fillStyle = 'black';
+  ctx.font = '12px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(`${this.name}`, this.x, this.y - 20);
+
+  // HP bar
+  for (let i = 0; i < this.hp; i++) {
+    ctx.strokeStyle = 'red';
+    ctx.beginPath();
+    ctx.moveTo(this.x - 10 + i * 7, this.y - 10);
+    ctx.lineTo(this.x - 6 + i * 7, this.y - 10);
+    ctx.stroke();
+  }
+}
+
+
+// 👇 Now this is a separate method, NOT inside draw
+hitBy(attacker) {
+  const now = Date.now();
+  const lastHit = lastHitTimestamps.get(this) || 0;
+  if (now - lastHit > 3000) {
+    this.hp--;
+    lastHitTimestamps.set(this, now);
+    if (this.hp <= 0) {
+      this.points = Math.max(0, this.points - 1);
+      this.x = Math.random() * canvas.width;
+      this.y = Math.random() * canvas.height;
+      this.hp = 3;
+    }
+  }
+}
+}
+
+function updateGoos() {
+  const now = Date.now();
+  const MAX_DISTANCE = 150;
+
+  for (let i = goos.length - 1; i >= 0; i--) {
+    const goo = goos[i];
+
+    // Predict next position
+    const nextX = goo.x + Math.cos(goo.angle) * 2;
+    const nextY = goo.y + Math.sin(goo.angle) * 2;
+
+    // Remove if the next step would be outside canvas
+    if (
+      nextX < 0 || nextX > canvas.width ||
+      nextY < 0 || nextY > canvas.height
+    ) {
+      goos.splice(i, 1);
+      continue;
+    }
+
+    // Move goo
+    goo.x = nextX;
+    goo.y = nextY;
+
+    // Remove if too far from shooter
+    const dx = goo.x - goo.shooter.x;
+    const dy = goo.y - goo.shooter.y;
+    const distFromShooter = Math.sqrt(dx * dx + dy * dy);
+    if (distFromShooter > MAX_DISTANCE) {
+      goos.splice(i, 1);
+      continue;
+    }
+
+    // Collision
+    for (const car of cars) {
+      if (car !== goo.shooter && getDistance(car, goo) < 10) {
+        car.status.slowedUntil = now + 5000;
+        car.wasSlowed = true;
+        goos.splice(i, 1);
+        break;
+      }
+    }
+
+    // Remove after 5 seconds
+    if (now - goo.createdAt > 5000) goos.splice(i, 1);
+  }
+}
+
+
+function updateBombs() {
+  const now = Date.now();
+  for (let i = bombs.length - 1; i >= 0; i--) {
+    const bomb = bombs[i];
+    for (const car of cars) {
+      if (car !== bomb.owner && getDistance(car, bomb) < 10) {
+        car.status.stunnedUntil = now + 3000;
+        bombs.splice(i, 1);
+        break;
+      }
+    }
+
+    // Remove bomb after 10 seconds if unused
+    if (now - bomb.plantedAt > 10000) bombs.splice(i, 1);
+  }
+}
+function drawGoos() {
+  ctx.fillStyle = '#39FF14'; // Neon green
+  goos.forEach(g => {
+    ctx.beginPath();
+    ctx.arc(g.x, g.y, 5, 0, Math.PI * 2); // Slightly bigger for visibility
+    ctx.shadowColor = '#39FF14';
+    ctx.shadowBlur = 10;
+    ctx.fill();
+    ctx.shadowBlur = 0;
+  });
+}
+
+
+function drawBombs() {
+  ctx.fillStyle = 'orange';
+  bombs.forEach(b => {
+    ctx.beginPath();
+    ctx.arc(b.x, b.y, 6, 0, Math.PI * 2);
+    ctx.fill();
+  });
+}
+
+
+// === Utility Functions ===
+function spawnFood() {
+  return {
+    x: Math.random() * canvas.width,
+    y: Math.random() * canvas.height
+  };
+}
+
+    function getDistance(a, b) {
+      const dx = a.x - b.x;
+      const dy = a.y - b.y;
+      return Math.sqrt(dx * dx + dy * dy);
+    }
+function drawFood() {
+  const gradient = ctx.createRadialGradient(food.x, food.y, 0, food.x, food.y, 15);
+  gradient.addColorStop(0, 'rgba(255, 255, 0, 1)');
+  gradient.addColorStop(1, 'rgba(255, 255, 0, 0)');
+
+  // Outer glow
+  ctx.fillStyle = gradient;
+  ctx.beginPath();
+  ctx.arc(food.x, food.y, 15, 0, Math.PI * 2);
+  ctx.fill();
+
+
+}
+
+
+    function checkCombat() {
+      for (let attacker of cars) {
+        const weaponX = attacker.x + Math.cos(attacker.angle) * 15;
+        const weaponY = attacker.y + Math.sin(attacker.angle) * 15;
+        for (let target of cars) {
+          if (attacker !== target && getDistance({ x: weaponX, y: weaponY }, target) < 10) {
+            target.hitBy(attacker);
+          }
+        }
+      }
+    }
+
+ function updateLeaderboard() {
+  const sorted = [...cars].sort((a, b) => b.points - a.points);
+  const labels = sorted.map(c => c.name);
+  const data = sorted.map(c => c.points);
+  const colors = sorted.map(c => c.color);
+
+  barChart.data.labels = labels;
+  barChart.data.datasets[0].data = data;
+  barChart.data.datasets[0].backgroundColor = colors;
+  barChart.update();
+}
+
+
+    function resetGame() { cars.forEach(c => { c.points = 0; c.hp = 3; }); }
+
+  
+    let food = spawnFood();
+let bestBrain = null;
+
+async function loadBestBrain() {
+  try {
+    bestBrain = await tf.loadLayersModel('localstorage://best-brain');
+    console.log('✅ Loaded best brain from localStorage');
+  } catch (e) {
+    console.warn('⚠️ No brain found, using random brains');
+  }
+}
+
+loadBestBrain().then(() => {
+  for (let i = 0; i < CAR_COUNT; i++) {
+    const car = new Car(`Car_${i + 1}`, pastelColors[i % pastelColors.length]);
+        const savedScores = JSON.parse(localStorage.getItem('carScores') || '[]');
+    const saved = savedScores.find(s => s.name === car.name);
+    if (saved) {
+      car.points = saved.points;
+      car.color = saved.color; // Also restore the same color
+    }
+
+    if (bestBrain) {
+      car.model.setWeights(bestBrain.getWeights().map(w => w.clone()));
+    }
+    cars.push(car);
+  }
+
+  food = spawnFood();
+
+
+});
+let barChart;
+
+function initChart() {
+  const ctxChart = document.getElementById('chart').getContext('2d');
+  barChart = new Chart(ctxChart, {
+    type: 'bar',
+    data: {
+      labels: [],
+      datasets: [{
+        label: 'Score',
+        data: [],
+        backgroundColor: []
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: false
+        },
+        title: {
+          display: true,
+          text: 'AI Car Scores',
+          color: 'black',
+          font: {
+            size: 18,
+            weight: 'bold'
+          }
+        },
+        datalabels: {
+          color: 'black',
+          anchor: 'end',
+          align: 'top',
+          formatter: Math.round,
+          font: { weight: 'bold' }
+        }
+      },
+      scales: {
+        x: { ticks: { color: 'black' } },
+        y: {
+          beginAtZero: true,
+          ticks: { color: 'black' },
+          title: { display: true, text: 'Points', color: 'black' }
+        }
+      }
+    },
+    plugins: [ChartDataLabels]
+  });
+}
+
+initChart(); // ✅ Called once after defining it
+
+
+ function gameLoop() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  drawFood();
+  updateGoos();
+  updateBombs();
+  drawGoos();
+  drawBombs();
+  checkCombat();
+
+  const top = [...cars].sort((a, b) => b.points - a.points)[0];
+
+  cars.forEach(car => {
+    car.update();
+    car.draw();
+
+
+  });
+
+  updateLeaderboard();
+  requestAnimationFrame(gameLoop);
+}
+
+setInterval(() => {
+  const top = [...cars].sort((a, b) => b.points - a.points)[0];
+  const brainWeights = top.model.getWeights();
+  for (const car of cars) {
+    if (car !== top) car.model.setWeights(brainWeights.map(w => w.clone()));
+  }
+
+  // 🧠 Save best brain to local storage
+  top.model.save('localstorage://best-brain');
+  console.log(`🧠 Saved best brain: ${top.name}`);
+}, 60000);
+
+// Add this in your global intervals:
+setInterval(() => {
+  cars.forEach(car => {
+    if (car.hp < 3) car.hp++;
+  });
+}, 60000); // regen 1 life per minute
+
+    gameLoop();
+  </script>
+</body>
+</html>

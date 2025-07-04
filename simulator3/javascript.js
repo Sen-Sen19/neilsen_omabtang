@@ -794,8 +794,8 @@ update() {
 // ============================ Explosives ============================
 let nukeFlashAlpha = 0; 
 const explosionRadii = {
-  "Bomb": 30,          // 🔴 Red bomb explosion radius
-  "Nuclear Bomb": 40   // ⚪ White nuke explosion radius
+  "Bomb": 30,         
+  "Nuclear Bomb": 40
 };
 
 function updateExplosives() {
