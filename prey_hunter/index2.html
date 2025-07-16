@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Pastel Tag AI</title>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.14.0/dist/tf.min.js"></script>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      overflow: hidden;
+      background: white;
+      font-family: sans-serif;
+    }
+    canvas {
+      display: block;
+      width: 100%;
+      height: calc(100vh - 100px);
+    }
+    #gui {
+      height: 100px;
+      background: #1a1a1a;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      font-size: 18px;
+    }
+    .score {
+      padding: 10px 20px;
+      border-radius: 10px;
+      background: #333;
+    }
+    #resetBtn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      z-index: 999;
+      padding: 8px 14px;
+      background: #ff5c5c;
+      border: none;
+      border-radius: 6px;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="gameCanvas"></canvas>
+  <div id="gui">
+    <div class="score" id="redScore">🔴 Red: 0</div>
+    <div class="score" id="blueScore">🔵 Blue: 0</div>
+    <div class="score" id="timer">⏱️ Time: 2:00</div>
+    <div class="score" id="generation">🧬 Gen: 1</div>
+  </div>
+  <button id="resetBtn" onclick="resetProgress()">🔁 Reset</button>
+<script>
+
+
+// Setup canvas
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight - 100;
+
+// Arena and visuals
+const pastelRed = '#fdd8c8';
+const pastelBlue = '#c4eeff';
+const arena = {
+  x: canvas.width / 2,
+  y: canvas.height / 2,
+  radius: Math.min(canvas.width, canvas.height - 100) / 2 - 40
+};
+
+// Globals
+const walls = [];
+const goos = [];
+let generation = parseInt(localStorage.getItem('generation')) || 1;
+document.getElementById("generation").textContent = `🧬 Gen: ${generation}`;
+
+class Agent {
+  constructor(x, y, color, name) {
+    Object.assign(this, {
+      x, y, color, name,
+      vx: 0, vy: 0,
+      lastX: x, lastY: y,
+      inactiveFrames: 0,
+      score: 0,
+      survivalTime: 0,
+      successfulSkills: 0,
+      speed: 6,
+      baseSpeed: 6,
+      cooldowns: {
+        flicker: 5000,
+        sprint: 8000,
+        goo: 6000,
+        hook: 7000,
+        wall: 10000,
+        tp_plant: 12000
+      },
+      lastUsed: {},
+      brain: this.createBrain()
+    });
+  }
+
+  createBrain() {
+    const model = tf.sequential();
+    model.add(tf.layers.dense({ inputShape: [10], units: 16, activation: 'relu' }));
+    model.add(tf.layers.dense({ units: 12, activation: 'relu' }));
+    model.add(tf.layers.dense({ units: 8, activation: 'tanh' }));
+    return model;
+  }
+
+  async loadBrain() {
+    try {
+      const model = await tf.loadLayersModel(`localstorage://${this.name}-brain`);
+      if (model.inputs[0].shape[1] !== 10) return null;
+      return model;
+    } catch {
+      return null;
+    }
+  }
+
+  saveBrain() {
+    this.brain.save(`localstorage://${this.name}-brain`);
+  }
+
+  canUse(skill) {
+    const now = Date.now();
+    return now - (this.lastUsed[skill] || 0) > this.cooldowns[skill];
+  }
+
+  useSkill(skill, target) {
+    this.lastUsed[skill] = Date.now();
+    this.successfulSkills++;
+    const dist = Math.hypot(this.x - target.x, this.y - target.y);
+
+    if (skill === 'flicker') {
+      this.x += (Math.random() - 0.5) * 120;
+      this.y += (Math.random() - 0.5) * 120;
+      if (dist < 100) this.score += 2.5;
+    }
+
+    if (skill === 'sprint') {
+      this.speed = 10;
+      setTimeout(() => this.speed = this.baseSpeed, 3000);
+      if (dist < 120) this.score += 1.5;
+    }
+
+    if (skill === 'wall') {
+   const angle = 0;
+      walls.push({
+        x: (this.x + target.x) / 2,
+        y: (this.y + target.y) / 2,
+        w: 160, h: 20,
+        angle,
+        createdAt: Date.now(),
+        lifespan: 5000
+      });
+      this.score += dist < 120 ? 1.2 : -0.5;
+    }
+
+    if (skill === 'goo') {
+      goos.push({
+        x: target.x,
+        y: target.y,
+        radius: 30,
+        createdAt: Date.now(),
+        lifespan: 4000,
+        owner: this.name
+      });
+      if (dist < 100) this.score += 1.8;
+    }
+
+    if (skill === 'hook') {
+      const dx = target.x - this.x;
+      const dy = target.y - this.y;
+      const d = Math.hypot(dx, dy);
+      if (d > 1) {
+        this.x += (dx / d) * 20;
+        this.y += (dy / d) * 20;
+        ctx.beginPath();
+        ctx.moveTo(this.x, this.y);
+        ctx.lineTo(target.x, target.y);
+        ctx.strokeStyle = 'rgba(255,255,0,0.6)';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        if (d < 150) this.score += 2;
+      }
+    }
+
+    if (skill === 'tp_plant') {
+      this.tpTrap = { x: this.x, y: this.y };
+      this.score += dist > 200 ? 1.2 : -0.5;
+    }
+
+    // Combos
+    const now = Date.now();
+    if (skill === 'sprint' && now - (this.lastUsed['flicker'] || 0) < 1000) this.score += 3;
+    if (skill === 'goo' && now - (this.lastUsed['flicker'] || 0) < 800) this.score += 2.5;
+    if (skill === 'wall' && now - (this.lastUsed['hook'] || 0) < 1000) this.score += 2;
+  }
+
+  move(target, isChaser) {
+    let slowed = false;
+    for (const g of goos) {
+      const d = Math.hypot(this.x - g.x, this.y - g.y);
+      if (d < g.radius && g.owner !== this.name) {
+        this.speed = 1;
+        slowed = true;
+        break;
+      }
+    }
+    if (!slowed) this.speed = this.baseSpeed;
+
+    const dx = target.x - this.x;
+    const dy = target.y - this.y;
+    const dist = Math.hypot(dx, dy);
+    const input = tf.tensor2d([[
+      this.x / canvas.width, this.y / canvas.height,
+      target.x / canvas.width, target.y / canvas.height,
+      dist / Math.hypot(canvas.width, canvas.height),
+      Math.atan2(dy, dx) / Math.PI,
+      isChaser ? 1 : 0,
+      this.canUse('flicker') ? 1 : 0,
+      isChaser ? 0 : -dx / dist,
+      isChaser ? 0 : -dy / dist
+    ]]);
+
+    const output = this.brain.predict(input);
+    const [dxOut, dyOut, flicker, goo, sprint, hook, wall, tp] = output.dataSync();
+    if (flicker > 0.8 && this.canUse('flicker')) this.useSkill('flicker', target);
+    if (goo > 0.8 && this.canUse('goo')) this.useSkill('goo', target);
+    if (sprint > 0.8 && this.canUse('sprint')) this.useSkill('sprint', target);
+    if (hook > 0.8 && this.canUse('hook')) this.useSkill('hook', target);
+    if (wall > 0.8 && this.canUse('wall')) this.useSkill('wall', target);
+    if (tp > 0.8 && this.canUse('tp_plant')) this.useSkill('tp_plant', target);
+
+const accelFactor = 0.3; // Smaller = slower acceleration
+this.vx += (dxOut * this.speed - this.vx) * accelFactor;
+this.vy += (dyOut * this.speed - this.vy) * accelFactor;
+
+    this.x += this.vx;
+    this.y += this.vy;
+
+    const moveDelta = Math.hypot(this.x - this.lastX, this.y - this.lastY);
+    this.inactiveFrames = moveDelta < 1 ? this.inactiveFrames + 1 : 0;
+    this.lastX = this.x;
+    this.lastY = this.y;
+
+    const dxToCenter = this.x - arena.x;
+    const dyToCenter = this.y - arena.y;
+    const distFromCenter = Math.hypot(dxToCenter, dyToCenter);
+    const maxDist = arena.radius - 20;
+    if (distFromCenter > maxDist) {
+      const angle = Math.atan2(dyToCenter, dxToCenter);
+      this.x = arena.x + Math.cos(angle) * maxDist;
+      this.y = arena.y + Math.sin(angle) * maxDist;
+      this.vx *= -0.7;
+      this.vy *= -0.7;
+    }
+
+    this.vx *= 0.95;
+    this.vy *= 0.95;
+    this.survivalTime++;
+    tf.dispose([input, output]);
+  }
+
+  draw(isChaser) {
+    if (isChaser) {
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, 25, 0, Math.PI * 2);
+      ctx.lineWidth = 6;
+    }
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, 20, 0, Math.PI * 2);
+    ctx.fillStyle = this.color;
+    ctx.fill();
+  }
+}
+
+
+const red = new Agent(100, 100, pastelRed, 'red');
+const blue = new Agent(400, 300, pastelBlue, 'blue');
+
+
+Promise.all([
+  red.loadBrain().then(b => b && (red.brain = b)),
+  blue.loadBrain().then(b => b && (blue.brain = b))
+]).then(() => {
+  resetPositions();
+  update();
+});
+
+function distance(a, b) {
+  return Math.hypot(a.x - b.x, a.y - b.y);
+}
+function resetPositions() {
+  function randomPositionInArena() {
+    const angle = Math.random() * 2 * Math.PI;
+    const r = Math.random() * (arena.radius - 60);
+    return {
+      x: arena.x + Math.cos(angle) * r,
+      y: arena.y + Math.sin(angle) * r
+    };
+  }
+
+  const redPos = randomPositionInArena();
+  red.x = redPos.x;
+  red.y = redPos.y;
+  red.vx = 0;
+  red.vy = 0;
+  red.lastX = red.x;
+  red.lastY = red.y;
+  red.inactiveFrames = 0;
+
+  const bluePos = randomPositionInArena();
+  blue.x = bluePos.x;
+  blue.y = bluePos.y;
+  blue.vx = 0;
+  blue.vy = 0;
+  blue.lastX = blue.x;
+  blue.lastY = blue.y;
+  blue.inactiveFrames = 0;
+
+  // Give them 10 frames of chill before AI starts firing hard
+  red.freezeFrames = 10;
+  blue.freezeFrames = 10;
+}
+
+
+
+
+
+let isRedChasing = true;
+let matchStart = Date.now();
+const matchDuration = 2 * 60 * 1000;
+let roundEnded = false;
+function formatTime() {
+  const t = Math.max(0, Math.floor((matchDuration - (Date.now() - matchStart)) / 1000));
+  return `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`;
+}
+function update() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Draw arena
+  ctx.beginPath();
+  ctx.arc(arena.x, arena.y, arena.radius, 0, Math.PI * 2);
+  ctx.strokeStyle = '#f1f1f0';
+  ctx.lineWidth = 6;
+  ctx.stroke();
+
+  const now = Date.now();
+  document.getElementById("timer").textContent = `⏱️ Time: ${formatTime()}`;
+  document.getElementById("redScore").textContent = `🔴 Red: ${Math.floor(red.score)}`;
+  document.getElementById("blueScore").textContent = `🔵 Blue: ${Math.floor(blue.score)}`;
+
+  // Goo
+  for (let i = goos.length - 1; i >= 0; i--) {
+    const g = goos[i];
+    const alpha = 1 - (now - g.createdAt) / g.lifespan;
+    ctx.fillStyle = `rgba(0, 255, 100, ${alpha * 0.5})`;
+    ctx.beginPath();
+    ctx.arc(g.x, g.y, g.radius, 0, Math.PI * 2);
+    ctx.fill();
+    if (now - g.createdAt > g.lifespan) goos.splice(i, 1);
+  }
+
+  // Walls
+  for (let i = walls.length - 1; i >= 0; i--) {
+    const wall = walls[i];
+    const alpha = 1 - (now - wall.createdAt) / wall.lifespan;
+    ctx.save();
+    ctx.translate(wall.x, wall.y);
+    ctx.rotate(wall.angle);
+    ctx.fillStyle = `rgba(100, 100, 100, ${alpha})`;
+    ctx.fillRect(-wall.w / 2, -wall.h / 2, wall.w, wall.h);
+    ctx.restore();
+    if (now - wall.createdAt > wall.lifespan) walls.splice(i, 1);
+  }
+
+  if (!roundEnded) {
+const chaser = red;
+const runner = blue;
+
+
+    chaser.move(runner, true);
+    runner.move(chaser, false);
+const dist = distance(chaser, runner);
+const proximity = dist;
+const now = Date.now();
+
+// RED: Hunter logic
+if (dist < 100) {
+  chaser.score += 0.03 * ((100 - dist) / 100); // small reward near
+}
+if (dist < 25) {
+  chaser.score += 10; // big reward on touch
+}
+if (dist > 200) {
+  chaser.score -= 0.01; // small penalty for being far
+}
+
+// BLUE: Runner logic
+if (now - (runner.lastSurvivalTick || 0) > 10000) {
+  runner.score += 0.5; // reward every 10 seconds survived
+  runner.lastSurvivalTick = now;
+}
+if (dist < 100) {
+  runner.score -= 0.03 * ((100 - dist) / 100); // small penalty near red
+}
+if (dist > 200) {
+  runner.score += 0.01; // small reward for distance
+}
+
+
+red.draw(true);   // always chaser
+blue.draw(false); // always runner
+
+    // End of round conditions
+if (dist < 25 || now - matchStart > matchDuration) {
+  if (dist < 25) {
+    chaser.score += 10;
+    runner.score -= 5;
+  } else {
+    runner.score += 8; // BIG survival reward
+  }
+
+  const winner = dist < 25 ? chaser : runner;
+  const loser = dist < 25 ? runner : chaser;
+
+  winner.score += 10 + winner.successfulSkills * 2 + Math.floor(winner.survivalTime / 30);
+  loser.score -= 15;
+
+  evolveBrains();
+  roundEnded = true;
+  setTimeout(startNewRound, 1000);
+}
+  } else {
+    red.draw(isRedChasing);
+    blue.draw(!isRedChasing);
+  }
+
+  requestAnimationFrame(update);
+}
+
+
+function evolveBrains() {
+  const redFit = red.score + red.successfulSkills + red.survivalTime / 60;
+  const blueFit = blue.score + blue.successfulSkills + blue.survivalTime / 60;
+
+if (redFit >= blueFit) {
+  blue.brain = cloneAndMutate(red.brain); // Runner learns
+} else {
+  red.brain = cloneAndMutate(blue.brain); // Hunter learns
+}
+// ➕ Add this to always evolve the hunter's own brain too:
+if (redFit > 0) red.brain = cloneAndMutate(red.brain);
+if (blueFit > 0) blue.brain = cloneAndMutate(blue.brain);
+
+  red.saveBrain();
+  blue.saveBrain();
+  generation++;
+  localStorage.setItem('generation', generation);
+  document.getElementById("generation").textContent = `🧬 Gen: ${generation}`;
+}
+
+function cloneAndMutate(model) {
+  const newModel = tf.sequential();
+  model.layers.forEach((layer, i) => {
+    const config = layer.getConfig();
+    if (i === 0) config.inputShape = [10];
+    newModel.add(tf.layers.dense(config));
+  });
+
+  const weights = model.getWeights();
+const mutationRate = generation < 20 ? 0.6 : 0.2;
+
+  const mutatedWeights = weights.map(w => {
+    const values = w.dataSync(); // read only
+    const mutated = values.map(v => v + (Math.random() - 0.5) * mutationRate);
+    return tf.tensor(mutated, w.shape);
+  });
+
+  newModel.setWeights(mutatedWeights);
+  return newModel;
+}
+
+
+function startNewRound() {
+  roundEnded = false;
+  walls.length = 0;
+  goos.length = 0;
+  resetPositions();
+  matchStart = Date.now();
+  red.survivalTime = 0;
+  blue.survivalTime = 0;
+  red.successfulSkills = 0;
+  blue.successfulSkills = 0;
+}
+
+
+function resetProgress() {
+  const confirmReset = confirm("Are you sure you want to reset all AI progress?");
+  if (confirmReset) {
+    localStorage.clear();
+    location.reload();
+  }
+}
+
+</script>
+
+</body>
+</html>

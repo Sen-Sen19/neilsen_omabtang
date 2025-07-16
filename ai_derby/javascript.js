@@ -29,6 +29,11 @@ class Car {
     this.hp = 3;
     this.brain = this.createBrain();
     this.inputs = [0, 0];
+    this.points = 0;         // For the overall graph
+this.roundPoints = 0;    // For per-minute brain evaluation
+this.points++;        // ⬅️ permanent score
+this.roundPoints++;   // ⬅️ temporary score
+
   }
 
   createBrain() {
@@ -61,6 +66,8 @@ class Car {
     ctx.fillStyle = this.color;
     ctx.beginPath();
     ctx.arc(0, 0, CAR_RADIUS, 0, Math.PI * 2);
+    ctx.fillText(`${this.name} (${this.roundPoints})`, this.x, this.y - 20);
+
     ctx.fill();
 
     // Draw weapon
@@ -138,6 +145,9 @@ function updateLeaderboard() {
   document.getElementById("leaderboard").innerHTML =
     '<h3>Leaderboard</h3>' +
     cars.map(car => `<div style="color:${car.color}; font-weight:${car === bestCar ? 'bold' : 'normal'}">${car.id} - ${car.points}pts (HP: ${car.hp})</div>`).join('');
+    const labels = sorted.map(c => c.name);
+const data = sorted.map(c => c.points); // ✅ Never reset
+
 }
 
 function resetGame() {
@@ -155,26 +165,24 @@ function evolveBrains() {
   bestWeights.forEach(w => w.dispose());
   console.log("Brains evolved from:", bestCar.id);
 }
+setInterval(() => {
+  const top = [...cars].sort((a, b) => b.roundPoints - a.roundPoints)[0];
 
-setInterval(evolveBrains, 60 * 60 * 1000); // Every hour
-
-function animate() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  drawFood();
-  cars.forEach(car => car.think());
-  for (let i = 0; i < cars.length; i++) {
-    for (let j = 0; j < cars.length; j++) {
-      cars[i].checkCollision(cars[j]);
+  // Only save if they made progress
+  if (top.roundPoints > 0) {
+    const brainWeights = top.model.getWeights();
+    for (const car of cars) {
+      if (car !== top) car.model.setWeights(brainWeights.map(w => w.clone()));
     }
+
+    top.model.save('localstorage://best-brain');
+    console.log(`🧠 Saved best brain this round: ${top.name}`);
   }
-  cars.forEach(car => {
-    checkFoodPickup(car);
-    if (car === bestCar) ctx.shadowColor = car.color;
-    car.draw();
-    ctx.shadowColor = "transparent";
-  });
-  updateLeaderboard();
-  requestAnimationFrame(animate);
-}
+
+  // Reset round scores ONLY (not overall points)
+  cars.forEach(c => c.roundPoints = 0);
+
+}, 60000); // every round
+
 
 animate();

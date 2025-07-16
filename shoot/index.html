@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AI SHOOTER</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: #111;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    canvas {
+      display: block;
+      width: 100vw;
+      height: 100vh;
+      background: #f0fff9;
+      touch-action: none;
+    }
+
+    .joystick {
+      position: fixed;
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.1);
+        border: 2px solid rgba(170, 170, 170, 0.3); /* Softer */
+
+      z-index: 10;
+      touch-action: none;
+      display: none;
+    }
+
+    .knob {
+      position: absolute;
+      width: 60px;
+      height: 60px;
+      background: rgba(100, 100, 100, 0.85);
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      left: 50%;
+      top: 50%;
+      border: 2px solid #ddd;
+    }
+
+    #leftJoystick { bottom: 20px; left: 20px; }
+    #rightJoystick {
+      bottom: 20px; right: 20px;
+      width: 120px; height: 120px;
+    }
+.hook-icon {
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  background: radial-gradient(circle at center, #ff4d4d 40%, #900 100%);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  left: 50%;
+  top: 50%;
+  z-index: 2;
+  pointer-events: none;
+  box-shadow: 0 0 8px rgba(255, 77, 77, 0.6);
+}
+
+
+    .cancel-zone {
+      position: absolute;
+      top: -500px;
+      left: -120%;
+      transform: translateX(-50%);
+      width: 100px;
+      height: 40px;
+    background: rgba(255, 77, 77, 0.4); /* red with 40% opacity */
+
+      border-radius: 10px;
+      color: white;
+      font-size: 14px;
+      font-family: sans-serif;
+      text-align: center;
+      line-height: 40px;
+      display: none;
+      z-index: 5;
+      opacity: 0.9;
+    }
+
+    body.aiming {
+      cursor: crosshair;
+    }
+  </style>
+</head>
+<body>
+<div id="rotateOverlay" style="
+  position: fixed;
+  top: 0; left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: #000c;
+  color: white;
+  display: none;
+  z-index: 9999;
+  font-family: sans-serif;
+  text-align: center;
+  padding-top: 40vh;
+  font-size: 24px;
+">
+  🔄 Please rotate your device to landscape.<br><br>
+  <button onclick="goFullscreenLandscape()" style="margin-top: 20px; padding: 10px 20px; font-size: 18px;">🔓 Enter Fullscreen</button>
+</div>
+<canvas id="gameCanvas"></canvas>
+
+<div id="leftJoystick" class="joystick">
+  <div class="knob"></div>
+</div>
+
+<div id="rightJoystick" class="joystick">
+<div class="hook-icon"></div>
+  <div class="cancel-zone">Cancel</div>
+  
+
+</div>
+<script src="mobileOrientation.js"></script>
+
+
+
+
+
+
+
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+
+let width, height;
+let riverHeight = 150;
+let islandHeight;
+
+const player = {
+  x: 0, y: 0, size: 50, speed: 5,
+  ax: 0, ay: 0, vx: 0, vy: 0,
+  color: '#f2f1f2', moveTarget: null,
+  canShoot: true, isAiming: false, rotation: 0
+};
+window.player = player;
+
+const aiPlayer = {
+  x: 100, y: 100, size: 50, speed: 3,
+  color: 'green', hp: 3, canShoot: true, rotation: 0,
+  moveCooldown: 0
+};
+
+
+const bullets = [];
+const aimDir = { value: null };
+let playerHP = 3;
+
+let roundTimer = 120;
+let gameOver = false;
+let roundStartTime = Date.now();
+player.deathProgress = 0;
+aiPlayer.deathProgress = 0;
+const shards = [];
+
+function resizeCanvas() {
+  width = canvas.width = window.innerWidth;
+  height = canvas.height = window.innerHeight;
+  islandHeight = (height - riverHeight) / 2;
+  player.x = width / 2;
+  player.y = height - islandHeight / 2;
+}
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+
+function fireBullet(dx, dy, shooter = player) {
+  const angle = Math.atan2(dy, dx);
+  bullets.push({
+    x: shooter.x,
+    y: shooter.y,
+    vx: Math.cos(angle) * 40,
+    vy: Math.sin(angle) * 40,
+    traveled: 0,
+    maxDist: 1000,
+    from: shooter
+  });
+  shooter.rotation = angle;
+  shooter.canShoot = false;
+  setTimeout(() => shooter.canShoot = true, 2000);
+}
+
+function update() {
+  // Player movement
+  if (player.moveTarget) {
+    const dx = player.moveTarget.x - player.x;
+    const dy = player.moveTarget.y - player.y;
+    const dist = Math.hypot(dx, dy);
+    if (dist > player.speed) {
+      const nextX = player.x + (dx / dist) * player.speed;
+      const nextY = player.y + (dy / dist) * player.speed;
+      if (!(nextY > islandHeight && nextY < islandHeight + riverHeight)) {
+        player.x = nextX;
+        player.y = nextY;
+        player.rotation = Math.atan2(dy, dx);
+      }
+    } else {
+      player.moveTarget = null;
+    }
+  }
+
+  player.vx += (player.ax - player.vx) * 0.2;
+  player.vy += (player.ay - player.vy) * 0.2;
+  const nextX = player.x + player.vx;
+  const nextY = player.y + player.vy;
+  if (!(nextY > islandHeight && nextY < islandHeight + riverHeight)) {
+    player.x = Math.max(player.size / 2, Math.min(width - player.size / 2, nextX));
+    player.y = Math.max(player.size / 2, Math.min(height - player.size / 2, nextY));
+    if (player.vx || player.vy) {
+      player.rotation = Math.atan2(player.vy, player.vx);
+    }
+  }
+
+  // Bullets
+  for (let i = bullets.length - 1; i >= 0; i--) {
+    const b = bullets[i];
+    b.x += b.vx;
+    b.y += b.vy;
+    b.traveled += Math.hypot(b.vx, b.vy);
+    if (b.traveled > b.maxDist || b.x < 0 || b.x > width || b.y < 0 || b.y > height) {
+      bullets.splice(i, 1);
+    }
+  }
+if (player.deathProgress > 0) {
+  player.deathProgress += 0.02;
+}
+
+if (aiPlayer.deathProgress > 0) {
+  aiPlayer.deathProgress += 0.02;
+}
+
+for (let i = shards.length - 1; i >= 0; i--) {
+  const s = shards[i];
+  s.vy += 0.5; 
+  s.x += s.vx;
+  s.y += s.vy;
+  s.alpha -= 0.008;
+  if (s.alpha <= 0) shards.splice(i, 1);
+}
+
+if ((player.deathProgress > 0 || aiPlayer.deathProgress > 0) && shards.length === 0 && !gameOver) {
+  gameOver = true;
+  showEndMessage(); 
+}
+
+}
+
+function updateAI() {
+    if (aiPlayer.deathProgress > 0) return;
+  if (aiPlayer.moveCooldown <= 0) {
+    let tx, ty;
+    do {
+      tx = Math.random() * width;
+      ty = Math.random() * height;
+    } while (ty > islandHeight && ty < islandHeight + riverHeight); // avoid river
+
+    aiPlayer.moveTarget = { x: tx, y: ty }; 
+    aiPlayer.moveCooldown = 60 + Math.random() * 60;
+  } else {
+    aiPlayer.moveCooldown--;
+  }
+
+  if (aiPlayer.moveTarget) {
+    const dx = aiPlayer.moveTarget.x - aiPlayer.x;
+    const dy = aiPlayer.moveTarget.y - aiPlayer.y;
+    const dist = Math.hypot(dx, dy);
+   if (dist > aiPlayer.speed) {
+  const nextX = aiPlayer.x + (dx / dist) * aiPlayer.speed;
+  const nextY = aiPlayer.y + (dy / dist) * aiPlayer.speed;
+
+  // Prevent crossing into river
+  if (!(nextY > islandHeight && nextY < islandHeight + riverHeight)) {
+    aiPlayer.x = nextX;
+    aiPlayer.y = nextY;
+    aiPlayer.rotation = Math.atan2(dy, dx);
+  } else {
+    // Cancel move target if it's leading into the river
+    aiPlayer.moveTarget = null;
+    aiPlayer.moveCooldown = 0;
+  }
+}
+ else {
+      aiPlayer.moveCooldown = 0;
+      aiPlayer.moveTarget = null;
+    }
+  }
+if (aiPlayer.canShoot && Math.random() < 0.02) {
+  const target = player;
+  const bulletSpeed = 40;
+  const toTargetX = target.x - aiPlayer.x;
+  const toTargetY = target.y - aiPlayer.y;
+  const relVelX = target.vx;
+  const relVelY = target.vy;
+
+  const a = relVelX * relVelX + relVelY * relVelY - bulletSpeed * bulletSpeed;
+  const b = 2 * (toTargetX * relVelX + toTargetY * relVelY);
+  const c = toTargetX * toTargetX + toTargetY * toTargetY;
+
+  const discriminant = b * b - 4 * a * c;
+
+  let aimX, aimY;
+
+  if (discriminant >= 0) {
+    const t1 = (-b - Math.sqrt(discriminant)) / (2 * a);
+    const t2 = (-b + Math.sqrt(discriminant)) / (2 * a);
+    const t = Math.max(t1, t2);
+
+    if (t > 0) {
+      aimX = target.x + target.vx * t;
+      aimY = target.y + target.vy * t;
+
+      // 🎯 Add natural randomness to mimic less-perfect aim
+aimX += (Math.random() - 0.5) * 5;
+aimY += (Math.random() - 0.5) * 5;
+    }
+  }
+
+  // Fallback if math fails
+  if (!aimX || !aimY || isNaN(aimX) || isNaN(aimY)) {
+    aimX = target.x;
+    aimY = target.y;
+  }
+
+  const dx = aimX - aiPlayer.x;
+  const dy = aimY - aiPlayer.y;
+  const dist = Math.hypot(dx, dy);
+
+  fireBullet(dx / dist, dy / dist, aiPlayer);
+}
+
+
+
+}
+
+
+function checkHits() {
+  for (let i = bullets.length - 1; i >= 0; i--) {
+    const b = bullets[i];
+    const target = (b.from === player) ? aiPlayer : player;
+    const dx = b.x - target.x;
+    const dy = b.y - target.y;
+    const dist = Math.hypot(dx, dy);
+    if (dist < target.size / 2) {
+      bullets.splice(i, 1);
+      if (target === player) playerHP--;
+      else aiPlayer.hp--;
+    }
+  }
+
+ if (playerHP <= 0 && player.deathProgress === 0) {
+  player.deathProgress = 1;
+  createShatterEffect(player.x, player.y, player.size, '#ffeae5');
+}
+
+if (aiPlayer.hp <= 0 && aiPlayer.deathProgress === 0) {
+  aiPlayer.deathProgress = 1;
+  createShatterEffect(aiPlayer.x, aiPlayer.y, aiPlayer.size, '#ffeae5');
+}
+
+}
+
+
+function drawPlayer() {
+  if (player.deathProgress > 0) return; // 🛑 Don't draw dead body
+  ctx.save();
+  ctx.translate(player.x, player.y);
+  ctx.rotate(player.rotation);
+
+  ctx.fillStyle =
+    playerHP === 3 ? "#e3fff6" :
+    playerHP === 2 ? "#fdffe5" :
+    "#ffeae5" ;
+
+  ctx.fillRect(-player.size / 2, -player.size / 2, player.size, player.size);
+  ctx.fillStyle = '#e4e4e4';
+  ctx.fillRect(player.size / 4, -player.size / 4, player.size / 4, player.size / 2);
+  ctx.restore();
+}
+function drawAI() {
+  if (aiPlayer.deathProgress > 0) return; // 🛑 Don't draw dead AI
+  ctx.save();
+  ctx.translate(aiPlayer.x, aiPlayer.y);
+  ctx.rotate(aiPlayer.rotation);
+
+  ctx.fillStyle =
+    aiPlayer.hp === 3 ? "#e3fff6" :
+    aiPlayer.hp === 2 ? "#fdffe5" :
+    "#ffeae5";
+
+  ctx.fillRect(-aiPlayer.size / 2, -aiPlayer.size / 2, aiPlayer.size, aiPlayer.size);
+  ctx.fillStyle = '#e4e4e4';
+  ctx.fillRect(aiPlayer.size / 4, -aiPlayer.size / 4, aiPlayer.size / 4, aiPlayer.size / 2);
+  ctx.restore();
+}
+
+function drawTimer() {
+  const elapsed = Math.floor((Date.now() - roundStartTime) / 1000);
+  roundTimer = 120 - elapsed;
+
+  ctx.fillStyle = "#000";
+  ctx.font = "20px sans-serif";
+  ctx.fillText(`Time: ${roundTimer}s`, 20, 30);
+  ctx.fillText(`Player HP: ${playerHP}`, 20, 60);
+  ctx.fillText(`AI HP: ${aiPlayer.hp}`, 20, 90);
+}
+function createShatterEffect(x, y, size, color) {
+  const pieces = 10;
+  for (let i = 0; i < pieces; i++) {
+    for (let j = 0; j < pieces; j++) {
+      const w = size / pieces;
+      const h = size / pieces;
+      const px = x - size / 2 + i * w;
+      const py = y - size / 2 + j * h;
+      const angle = Math.random() * Math.PI * 2;
+      const speed = Math.random() * 10 + 5;
+
+      shards.push({
+        x: px,
+        y: py,
+        w,
+        h,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        color,
+        alpha: 1
+      });
+    }
+  }
+}
+function draw() {
+  update();
+  updateAI();
+  checkHits();
+
+  ctx.clearRect(0, 0, width, height);
+
+  // Backgrounds
+  ctx.fillStyle = '#fafefe';
+  ctx.fillRect(0, 0, width, islandHeight);
+  ctx.fillStyle = '#fafefe';
+  ctx.fillRect(0, height - islandHeight, width, islandHeight);
+  ctx.fillStyle = '#f6f6f6';
+  ctx.fillRect(0, islandHeight, width, riverHeight);
+
+  drawPlayer();
+  drawAI();
+  drawTimer();
+
+  // Bullets
+  bullets.forEach((b) => {
+    ctx.fillStyle = '#cfcfcf';
+    ctx.beginPath();
+    ctx.arc(b.x, b.y, 8, 0, Math.PI * 2);
+    ctx.fill();
+  });
+
+  // Aiming line
+  if (player.isAiming && aimDir.value && Math.hypot(aimDir.value.dx, aimDir.value.dy) > 0.1) {
+    const lineLength = 1000;
+    ctx.strokeStyle = '#ff4d4d';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(player.x, player.y);
+    ctx.lineTo(player.x + aimDir.value.dx * lineLength, player.y + aimDir.value.dy * lineLength);
+    ctx.stroke();
+
+    ctx.fillStyle = '#ff4d4d';
+    ctx.beginPath();
+    ctx.arc(player.x + aimDir.value.dx * lineLength, player.y + aimDir.value.dy * lineLength, 8, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // ✨ Shards (death fragments)
+  shards.forEach(s => {
+    ctx.globalAlpha = s.alpha;
+    ctx.fillStyle = s.color;
+    ctx.fillRect(s.x, s.y, s.w, s.h);
+  });
+  ctx.globalAlpha = 1;
+
+  if (!gameOver) {
+    requestAnimationFrame(draw);
+  }
+
+
+}
+
+
+function showEndMessage() {
+  let message;
+  if (player.deathProgress > 0 && aiPlayer.deathProgress > 0) {
+    message = "Draw!";
+  } else if (player.deathProgress > 0) {
+    message = "You Died!";
+  } else {
+    message = "You Win!";
+  }
+
+  const overlay = document.createElement('div');
+  overlay.id = "gameOverUI";
+  overlay.style.position = "fixed";
+  overlay.style.top = "0";
+  overlay.style.left = "0";
+  overlay.style.width = "100%";
+  overlay.style.height = "100%";
+  overlay.style.background = "rgba(0,0,0,0.85)";
+  overlay.style.color = "#fff";
+  overlay.style.display = "flex";
+  overlay.style.flexDirection = "column";
+  overlay.style.justifyContent = "center";
+  overlay.style.alignItems = "center";
+  overlay.style.fontFamily = "sans-serif";
+  overlay.style.fontSize = "48px";
+  overlay.style.zIndex = "9999";
+
+  const text = document.createElement("div");
+  text.textContent = message;
+
+  const sub = document.createElement("div");
+  sub.style.fontSize = "20px";
+  sub.style.marginTop = "20px";
+  sub.textContent = "Tap anywhere to restart...";
+
+  overlay.appendChild(text);
+  overlay.appendChild(sub);
+  document.body.appendChild(overlay);
+
+  // Optional countdown display
+  let countdown = 3;
+  const countText = document.createElement("div");
+  countText.style.fontSize = "16px";
+  countText.style.marginTop = "10px";
+  countText.textContent = `Restarting in ${countdown}...`;
+  overlay.appendChild(countText);
+
+  const interval = setInterval(() => {
+    countdown--;
+    if (countdown > 0) {
+      countText.textContent = `Restarting in ${countdown}...`;
+    } else {
+      clearInterval(interval);
+      countText.textContent = `Restarting...`;
+    }
+  }, 1000);
+
+  // Reload on click
+  overlay.addEventListener("click", () => location.reload());
+}
+
+draw();
+
+// Controls
+canvas.addEventListener('contextmenu', (e) => {
+  e.preventDefault();
+  const rect = canvas.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+  if (y > islandHeight && y < islandHeight + riverHeight) return;
+  player.moveTarget = { x, y };
+});
+canvas.addEventListener('click', (e) => {
+  if (player.deathProgress > 0) return; // 🚫 Don't shoot if dead
+  if (!player.isAiming || !player.canShoot) return;
+  const rect = canvas.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+  const dx = x - player.x;
+  const dy = y - player.y;
+  const dist = Math.hypot(dx, dy);
+  if (dist === 0) return;
+  fireBullet(dx / dist, dy / dist);
+  player.isAiming = false;
+  document.body.classList.remove('aiming');
+});
+
+
+window.addEventListener('keydown', (e) => {
+  if (e.key.toLowerCase() === 'q' && player.canShoot) {
+    player.isAiming = true;
+    document.body.classList.add('aiming');
+  }
+  if (e.key === 'Escape' && player.isAiming) {
+    player.isAiming = false;
+    document.body.classList.remove('aiming');
+  }
+});
+
+// 🔥 Optional: Touch control & rotation
+if (typeof initMobileOrientation === 'function') initMobileOrientation();
+if (typeof initTouchControls === 'function') initTouchControls(player, fireBullet, aimDir);
+
+</script>
+
+
+</body>
+</html>

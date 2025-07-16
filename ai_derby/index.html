@@ -114,12 +114,19 @@ setInterval(() => {
   document.getElementById('simTimer').textContent = `⏱ ${mins}:${secs}`;
 }, 1000);
 document.getElementById('resetBrainBtn').addEventListener('click', async () => {
-  await tf.io.removeModel('localstorage://best-brain');
+  try {
+    await tf.io.removeModel('localstorage://best-brain');
+    console.log('🧠 Old best brain wiped!');
+  } catch (err) {
+    console.warn('⚠️ No best brain to remove:', err.message);
+  }
+
   localStorage.removeItem('simStart');
-  localStorage.removeItem('carScores'); // 🧼 Clear scores
+  localStorage.removeItem('carScores');
   alert('🧠 Brain wiped! Reloading...');
   location.reload();
 });
+
 
 setInterval(() => {
   const scores = cars.map(c => ({
@@ -168,8 +175,13 @@ class Car {
     this.hp = 3;
     this.points = 0;
     this.model = createBrain();
-    this.speed = 2;
+    this.speed = 4;
     this.lastHit = 0;
+    this.points = 0;         // For the overall graph
+this.roundPoints = 0;    // For per-minute brain evaluation
+this.points++;        // ⬅️ permanent score
+this.roundPoints++;   // ⬅️ temporary score
+
 this.cooldowns = {
   flicker: 0,
   goo: 0,
@@ -202,6 +214,7 @@ update() {
   const output = this.model.predict(input).dataSync();
 const steer = output[0];
 const speedFactor = (output[1] + 1) / 2;
+
 const useGoo = output[2] > 0.8;
 const useBomb = output[3] > 0.8;
 const useFlicker = output[4] > 0.8;
@@ -216,31 +229,31 @@ if (useGoo) this.shootGoo();
 if (useBomb) this.plantBomb();
 if (useFlicker) this.flicker();
 if (useSprint) this.sprint();
-if (useWill) this.willShot();        // 🆕
-if (useChain) this.chainBlast();     // 🆕
+if (useWill) this.willShot();    
+if (useChain) this.chainBlast();    
 
 
 
-  if (this.status.stunnedUntil > now) return; // Can't move if stunned
+  if (this.status.stunnedUntil > now) return;
   const isSlowed = this.status.slowedUntil > now;
 const isSprinting = this.status.sprintingUntil > now;
-const speedMod = isSlowed ? 0.3 : (isSprinting ? 3 : 1);
+const speedMod = isSlowed ? 0.3 : (isSprinting ? 5 : 1);
 
 
   this.angle += steer * 0.2;
   this.x += Math.cos(this.angle) * this.speed * speedFactor * speedMod;
   this.y += Math.sin(this.angle) * this.speed * speedFactor * speedMod;
+if (getDistance(this, food) < 20) {
+  this.points += 3;         
+  this.roundPoints += 3;
+  food = spawnFood();
+}
 
-  if (getDistance(this, food) < 20) {
-    this.points++;
-    food = spawnFood();
-    
-  }
 
   this.x = Math.max(0, Math.min(canvas.width, this.x));
   this.y = Math.max(0, Math.min(canvas.height, this.y));
 
-  // Weapon collision logic
+
   for (const other of cars) {
     if (other !== this && now - this.lastHit > 3000) {
       const wx = this.x + Math.cos(this.angle) * 15;
@@ -378,7 +391,8 @@ if (this.status.sprintingUntil > Date.now()) {
   ctx.fillStyle = 'black';
   ctx.font = '12px sans-serif';
   ctx.textAlign = 'center';
-  ctx.fillText(`${this.name}`, this.x, this.y - 20);
+ctx.fillText(`${this.name} (${this.roundPoints})`, this.x, this.y - 20);
+
 
   // HP bar
   for (let i = 0; i < this.hp; i++) {
@@ -662,16 +676,24 @@ initChart(); // ✅ Called once after defining it
 }
 
 setInterval(() => {
-  const top = [...cars].sort((a, b) => b.points - a.points)[0];
-  const brainWeights = top.model.getWeights();
-  for (const car of cars) {
-    if (car !== top) car.model.setWeights(brainWeights.map(w => w.clone()));
+  const top = [...cars].sort((a, b) => b.roundPoints - a.roundPoints)[0];
+
+  // Only save if they made progress
+  if (top.roundPoints > 0) {
+    const brainWeights = top.model.getWeights();
+    for (const car of cars) {
+      if (car !== top) car.model.setWeights(brainWeights.map(w => w.clone()));
+    }
+
+    top.model.save('localstorage://best-brain');
+    console.log(`🧠 Saved best brain this round: ${top.name}`);
   }
 
-  // 🧠 Save best brain to local storage
-  top.model.save('localstorage://best-brain');
-  console.log(`🧠 Saved best brain: ${top.name}`);
-}, 60000);
+  // Reset round scores ONLY (not overall points)
+  cars.forEach(c => c.roundPoints = 0);
+
+}, 60000); // every round
+
 
 // Add this in your global intervals:
 setInterval(() => {

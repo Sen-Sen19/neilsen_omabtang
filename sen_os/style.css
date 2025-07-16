@@ -1,0 +1,196 @@
+  html,
+      body {
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        font-family: "Courier New", monospace;
+        background: #fff;
+        color: #000000;
+      }
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+      .brand-logo {
+        font-family: "Joy Children", sans-serif;
+        font-size: 6rem;
+        letter-spacing: -4px;
+        margin-bottom: 20px;
+        text-align: center;
+        line-height: 1;
+        /* text-shadow: 0 0 10px rgba(0,0,0,0.3); */
+      }
+
+      .brand-logo .sen {
+        color: #000000;
+      }
+
+      .brand-logo .os {
+        color: red;
+      }
+
+      #boot-screen {
+        position: fixed;
+        inset: 0;
+        background: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        font-size: 1.2rem;
+        z-index: 9999;
+        color: #333;
+        text-align: center;
+      }
+
+      .boot-container {
+        width: 320px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .blinker {
+        animation: blink 1s infinite;
+        margin-top: 12px;
+      }
+
+      @keyframes blink {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.3;
+        }
+      }
+
+      .progress-bar {
+        width: 200px;
+        height: 10px;
+        background: #e0e0e0;
+        border-radius: 10px;
+        overflow: hidden;
+        margin-top: 10px;
+        box-shadow: inset 0 0 3px #aaa;
+      }
+
+      .progress-fill {
+        width: 1%;
+        height: 100%;
+        background: linear-gradient(to right, #00ffcc, #0077ff);
+        border-radius: 10px;
+        transition: width 0.3s ease-in-out;
+        box-shadow: 0 0 8px #00ccffaa;
+      }
+
+      .log-line {
+        opacity: 0.8;
+        font-size: 0.9rem;
+        margin-top: 8px;
+        width: 100%;
+        text-align: center;
+        word-wrap: break-word;
+        white-space: normal;
+      }
+
+      .desktop-icons {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 20px;
+      }
+      .icon {
+        width: 80px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        cursor: pointer;
+        color: #fff;
+        text-shadow: none;
+      }
+
+      .icon:hover {
+        background-color: rgba(238, 238, 238, 0.158);
+        border-radius: 8px;
+        transition: all 0.2s ease-in-out;
+      }
+
+      .icon span {
+        margin-top: 5px;
+        font-size: 0.85rem;
+        text-align: center;
+      }
+
+      .taskbar {
+        position: absolute;
+        bottom: 0;
+        width: 100%;
+        height: 50px;
+        background: #cfcfcfbe;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 10px;
+        box-shadow: 0 -1px 3px rgba(0, 0, 0, 0.4);
+        color: #fff;
+      }
+
+      .taskbar-left,
+      .taskbar-right {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-right: 10px;
+      }
+
+      .start-button img {
+        width: 32px;
+        height: 32px;
+        border-radius: 6px;
+        cursor: pointer;
+        margin-right: 20px;
+      }
+
+      .taskbar-icon {
+        cursor: pointer;
+        user-select: none;
+      }
+
+      .taskbar-icon:hover {
+        background-color: rgba(255, 255, 255, 0.445);
+        border-radius: 6px;
+      }
+
+      .taskbar-right .taskbar-icon img {
+        width: 16px;
+        height: 16px;
+      }
+
+      .taskbar-left .taskbar-icon img {
+        width: 40px;
+        height: 40px;
+        padding: 5px;
+      }
+
+      #clock {
+        font-size: 0.8rem;
+        min-width: 80px;
+        text-align: right;
+        color: #030303;
+        white-space: nowrap;
+        overflow: hidden;
+        margin-right: 8px;
+        line-height: 1.2;
+      }
+
+      #clock #date {
+        font-size: 0.8rem;
+        color: #000000;
+        margin-top: 2px;
+      }

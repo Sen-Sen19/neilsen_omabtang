@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AI Food Hunt - Competitive</title>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.14.0/dist/tf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body {
+      height: 100%;
+      width: 100%;
+      overflow: hidden;
+      font-family: sans-serif;
+      background: #111;
+      color: #fff;
+    }
+    #canvas {
+      display: block;
+      width: 100vw;
+      height: calc(100vh - 200px);
+      background: #fff;
+    }
+    #gui {
+      width: 100%;
+      height: 200px;
+      background: #c9c9c9;
+      border-top: 2px solid #333;
+      padding: 10px;
+    }
+    #chart-container {
+      width: 100%;
+      height: 100%;
+    }
+    #chart {
+      width: 100% !important;
+      height: 100% !important;
+    }
+    #resetBtn {
+      background: #444;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 8px 12px;
+      font-size: 1em;
+      cursor: pointer;
+    }
+    #resetBtn:hover {
+      background: #666;
+    }
+  </style>
+</head>
+<body>
+<canvas id="canvas"></canvas>
+<div style="position: absolute; top: 10px; left: 10px; display: flex; gap: 20px;">
+  <div id="timer" style="font-size: 1.5em; font-weight: bold;">Time: 40s</div>
+  <button id="resetBtn">🔁 Reset</button>
+</div>
+<div id="gui">
+  <div id="chart-container">
+    <canvas id="chart"></canvas>
+  </div>
+</div>
+
+<script>
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight - 200;
+
+const COLORS = ["#aaffaa", "#ffffcc", "#ffcccc", "#ddeeff", "#f0ddff"];
+const agents = [];
+let food = { x: 200, y: 200 };
+const radius = 20;
+let remainingTime = 40;
+let timerInterval;
+let scoreChart;
+
+class Agent {
+  constructor(color) {
+    this.x = Math.random() * canvas.width;
+    this.y = Math.random() * canvas.height;
+    this.color = color;
+    this.brain = this.createBrain();
+    this.score = 0;
+
+    // 💥 Skills
+    this.speed = 2;
+    this.sprintCooldown = 0;
+    this.sprintTimer = 0;
+  }
+
+  createBrain() {
+    const model = tf.sequential();
+    model.add(tf.layers.dense({
+      inputShape: [2],
+      units: 8,
+      activation: 'relu',
+      kernelInitializer: tf.initializers.randomNormal({ mean: 0, stddev: 0.5 })
+    }));
+    model.add(tf.layers.dense({
+      units: 2,
+      activation: 'tanh',
+      kernelInitializer: tf.initializers.randomNormal({ mean: 0, stddev: 0.5 })
+    }));
+    return model;
+  }
+
+  think() {
+    // ✨ Flicker teleport near food if far away
+    const distToFood = Math.hypot(food.x - this.x, food.y - this.y);
+    if (distToFood > 200 && Math.random() < 0.002) {
+      this.x = food.x + (Math.random() - 0.5) * 100;
+      this.y = food.y + (Math.random() - 0.5) * 100;
+    }
+
+    // 🌀 Sprint skill
+    if (this.sprintCooldown <= 0 && Math.random() < 0.01) {
+      this.sprintTimer = 60; // active for 1s (60 frames)
+      this.sprintCooldown = 600; // 10s cooldown
+    }
+    if (this.sprintTimer > 0) {
+      this.speed = 5;
+      this.sprintTimer--;
+    } else {
+      this.speed = 2;
+    }
+    if (this.sprintCooldown > 0) this.sprintCooldown--;
+
+    // Movement thinking
+    const input = tf.tensor2d([[food.x - this.x, food.y - this.y]]);
+    const output = this.brain.predict(input);
+    const [dx, dy] = output.dataSync();
+    this.x += dx * this.speed;
+    this.y += dy * this.speed;
+    this.x = Math.max(radius, Math.min(canvas.width - radius, this.x));
+    this.y = Math.max(radius, Math.min(canvas.height - radius, this.y));
+    tf.dispose([input, output]);
+  }
+
+  draw() {
+    ctx.beginPath();
+    ctx.fillStyle = this.color;
+    ctx.arc(this.x, this.y, radius, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  checkFood() {
+    const dx = this.x - food.x;
+    const dy = this.y - food.y;
+    if (Math.hypot(dx, dy) < radius * 2) {
+      this.score++;
+      spawnFood();
+    }
+  }
+}
+
+function spawnFood() {
+  food.x = Math.random() * (canvas.width - 40) + 20;
+  food.y = Math.random() * (canvas.height - 40) + 20;
+}
+
+function drawFood() {
+  ctx.beginPath();
+  ctx.fillStyle = "#ff0";
+  ctx.arc(food.x, food.y, radius / 2, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function setupChart() {
+  const ctxChart = document.getElementById("chart").getContext("2d");
+  scoreChart = new Chart(ctxChart, {
+    type: 'bar',
+    data: {
+      labels: COLORS.map((_, i) => `Agent ${i + 1}`),
+      datasets: [{
+        label: 'Score',
+        data: agents.map(a => a.score),
+        backgroundColor: COLORS,
+        borderWidth: 1
+      }]
+    },
+    options: {
+      animation: false,
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: { stepSize: 1 }
+        }
+      }
+    }
+  });
+}
+
+function updateChart() {
+  if (!scoreChart) return;
+  scoreChart.data.datasets[0].data = agents.map(a => a.score);
+  scoreChart.update();
+}
+
+function update() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  drawFood();
+
+  for (const agent of agents) {
+    agent.think();
+    agent.checkFood();
+    agent.draw();
+  }
+
+  // 🟡 Goo Attack: Push weaker agents when colliding
+  for (let i = 0; i < agents.length; i++) {
+    for (let j = i + 1; j < agents.length; j++) {
+      const a = agents[i];
+      const b = agents[j];
+      const dx = b.x - a.x;
+      const dy = b.y - a.y;
+      const dist = Math.hypot(dx, dy);
+      if (dist < radius * 2) {
+        const push = 3;
+        const angle = Math.atan2(dy, dx);
+        if (a.score > b.score) {
+          b.x += Math.cos(angle) * push;
+          b.y += Math.sin(angle) * push;
+        } else if (b.score > a.score) {
+          a.x -= Math.cos(angle) * push;
+          a.y -= Math.sin(angle) * push;
+        }
+      }
+    }
+  }
+
+  updateChart();
+  requestAnimationFrame(update);
+}
+
+function startGame() {
+  agents.length = 0;
+  COLORS.forEach(color => agents.push(new Agent(color)));
+  spawnFood();
+  remainingTime = 40;
+  document.getElementById("timer").textContent = `Time: ${remainingTime}s`;
+
+  if (timerInterval) clearInterval(timerInterval);
+  timerInterval = setInterval(() => {
+    remainingTime--;
+    document.getElementById("timer").textContent = `Time: ${remainingTime}s`;
+    if (remainingTime <= 0) endRound();
+  }, 1000);
+
+  if (scoreChart) {
+    scoreChart.destroy();
+  }
+  setupChart();
+}
+
+function endRound() {
+  clearInterval(timerInterval);
+  const highest = Math.max(...agents.map(a => a.score));
+  for (const agent of agents) {
+    if (agent.score === highest) {
+      agent.score += 5; // 🏆 Bonus
+    } else {
+      agent.score = Math.max(0, agent.score - 2); // ❌ Punishment
+    }
+  }
+  updateChart();
+  alert(`⏰ Time's up!\nFinal Scores:\n${agents.map((a, i) => `Agent ${i + 1}: ${a.score}`).join('\n')}`);
+}
+
+document.getElementById("resetBtn").addEventListener("click", () => {
+  startGame();
+});
+
+startGame();
+update();
+</script>
+
+</body>
+</html>

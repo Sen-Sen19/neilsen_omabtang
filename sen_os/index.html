@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link href="https://fonts.cdnfonts.com/css/joy-children" rel="stylesheet" />
+    <link href="style.css" rel="stylesheet" />
+    <title>Sen OS - XXI</title>
+    <style>
+      #desktop {
+      display: none;
+        width: 100vw;
+        height: 100vh;
+        background: url('../img/background.jpg') no-repeat center center;
+        background-size: cover;
+        color: rgb(0, 0, 0);
+        position: relative;
+  
+        }
+.desktop-icons span {
+  color: black !important;
+}
+      /* #desktop {
+        display: none;so
+        width: 100vw;
+        height: 100vh;
+        background: #fff;
+        color: #fff;
+        position: relative;
+      } */
+      /* #desktop {
+        display: none;
+        width: 100vw;
+        height: 100vh;
+        background: #1b1b1b;
+        color: #fff;
+        position: relative;
+      } */
+
+      .modal {
+        position: absolute;
+        top: 100px;
+        left: 100px;
+        width: 650px;
+        height: 400px;
+        background: #fefefe;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        z-index: 10000;
+        display: flex;
+        flex-direction: column;
+        font-family: "Segoe UI", sans-serif;
+        overflow: hidden;
+        transition: top 0.2s ease, left 0.2s ease;
+      }
+
+      .modal.hidden {
+        display: none;
+      }
+
+      .modal-header {
+        background: #e8e8e8;
+        padding: 6px 10px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-bottom: 1px solid #ccc;
+        height: 36px;
+      }
+
+      .window-controls {
+        display: flex;
+        gap: 8px;
+      }
+
+      .window-controls .btn {
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        text-align: center;
+        line-height: 14px;
+        font-size: 0.8rem;
+        cursor: pointer;
+        user-select: none;
+        font-weight: bold;
+      }
+
+      .btn.minimize {
+        background: #facc15;
+        color: #444;
+      }
+      .btn.restore {
+        background: #4ade80;
+        color: #444;
+      }
+      .btn.close {
+        background: #f87171;
+        color: #fff;
+      }
+
+      .btn:hover {
+        filter: brightness(0.9);
+      }
+
+      .modal-title {
+        font-weight: 500;
+        font-size: 0.9rem;
+        color: #333;
+        flex-grow: 1;
+        text-align: left;
+      }
+
+      .modal-body {
+        display: flex;
+        flex-grow: 1;
+      }
+
+      .sidebar {
+        width: 140px;
+        background: #f4f4f4;
+        border-right: 1px solid #ccc;
+        padding: 10px;
+      }
+
+      .sidebar ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+
+      .sidebar li {
+        padding: 8px;
+        margin-bottom: 6px;
+        background: #fff;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 0.85rem;
+        display: flex;
+        align-items: center;
+      }
+
+      .sidebar li:hover {
+        background: #dbeafe;
+      }
+
+      .content {
+        flex-grow: 1;
+        padding: 20px;
+        background: #ffffff;
+        overflow-y: auto;
+        font-size: 0.9rem;
+      }
+      .modal.maximized {
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        border-radius: 0;
+      }
+
+      .sidebar li.active {
+        background: #c3ddfd;
+        font-weight: bold;
+      }
+
+      .taskbar-icon.folder-opened {
+        background: rgba(255, 255, 255, 0.445);
+        border-radius: 6px;
+      }
+      #browser-tabs .tab {
+        padding: 6px 12px;
+        cursor: pointer;
+        border: none;
+        background: transparent;
+        font-size: 0.85rem;
+      }
+
+      #browser-tabs .tab:hover {
+        background: #ddd;
+      }
+
+      #browser-tabs .tab.active {
+        background: #fff;
+        border-bottom: 2px solid dodgerblue;
+        font-weight: bold;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Boot Screen -->
+    <div id="boot-screen">
+      <div class="boot-container">
+        <div class="brand-logo">
+          <span class="sen">SEN</span><span class="os">OS</span>
+        </div>
+        <p id="boot-text">Initializing Sen OS...</p>
+        <p id="boot-percent">Loading... 1%</p>
+        <div class="progress-bar">
+          <div class="progress-fill" id="progress-fill"></div>
+        </div>
+        <div class="log-line" id="boot-log">
+          [SYS] Allocating memory modules...
+        </div>
+        <p class="blinker">Please wait_</p>
+      </div>
+    </div>
+    <div id="desktop">
+      <div class="desktop-icons">
+        <!-- Trash Bin -->
+        <!-- 🗑️ Custom Trash -->
+        <div class="icon">
+          <img src="https://img.icons8.com/fluency/48/filled-trash.png" />
+
+          <span>Trash</span>
+        </div>
+
+        <!-- 🌐 Sen Edge Browser -->
+        <div class="icon">
+          <img src="https://img.icons8.com/fluency/48/internet.png" />
+          <span>Insenity</span>
+        </div>
+
+        <!-- 📁 Custom Files -->
+        <div class="icon">
+          <img
+            src="https://img.icons8.com/fluency/48/folder-invoices--v2.png"
+          />
+
+          <span>Files</span>
+        </div>
+
+        <!-- 🖥️ Terminal -->
+        <div class="icon">
+          <img src="https://img.icons8.com/fluency/48/console.png" />
+          <span>Terminal</span>
+        </div>
+
+        <!-- 📬 Contact Me -->
+        <div class="icon">
+          <img src="https://img.icons8.com/fluency/48/email-open.png" />
+
+          <span>Contact Me</span>
+        </div>
+
+        <!-- 📝 Custom Notepad -->
+        <div class="icon">
+          <img src="https://img.icons8.com/fluency/48/note.png" />
+          <span>Notepad</span>
+        </div>
+
+        <!-- 🎮 Games -->
+        <div class="icon">
+          <img src="https://img.icons8.com/fluency/48/controller.png" />
+          <span>Games</span>
+        </div>
+      </div>
+
+      <div class="taskbar">
+        <div class="taskbar-left">
+          <div class="start-button">
+            <img src="../img/logo.png" alt="Logo" />
+          </div>
+          <div class="taskbar-icon">
+            <img
+              src="https://img.icons8.com/fluency/48/folder-invoices--v2.png"
+            />
+          </div>
+          <div class="taskbar-icon">
+            <img src="https://img.icons8.com/fluency/24/console.png" />
+          </div>
+
+          <div class="taskbar-icon">
+            <img src="https://img.icons8.com/fluency/24/internet.png" />
+          </div>
+          <div class="taskbar-icon">
+            <img src="https://img.icons8.com/fluency/48/email-open.png" />
+          </div>
+          <div class="taskbar-icon">
+            <img
+              src="https://img.icons8.com/color/24/adobe-photoshop--v1.png"
+            />
+          </div>
+          <div class="taskbar-icon">
+            <img
+              src="https://img.icons8.com/color/24/visual-studio-code-2019.png"
+            />
+          </div>
+        </div>
+        <div class="taskbar-right">
+          <div class="taskbar-icon">^</div>
+          <div class="taskbar-icon">
+            <img src="https://img.icons8.com/fluency/20/message-group.png" />
+          </div>
+          <div class="taskbar-icon">
+            <img src="https://img.icons8.com/fluency/20/bluetooth.png" />
+          </div>
+          <div class="taskbar-icon">
+            <img src="https://img.icons8.com/fluency/20/usb-connected.png" />
+          </div>
+          <div class="taskbar-icon">
+            <img src="https://img.icons8.com/fluency/20/wifi.png" />
+          </div>
+
+          <div class="taskbar-icon">
+            <img src="https://img.icons8.com/fluency/20/speaker.png" />
+          </div>
+          <div id="clock">
+            <div id="time">--:--</div>
+            <div id="date">-- -- ----</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- =========================================================== Modals =========================================================== -->
+
+    <!-- ========================= File Modal ========================= -->
+    <div id="files-modal" class="modal hidden">
+      <div class="modal-header">
+        <div class="modal-title">
+          This PC > <span id="current-section">Desktop</span>
+        </div>
+        <div class="window-controls">
+          <span class="btn minimize" title="Minimize">−</span>
+          <span class="btn restore" id="maximizeBtn" title="Maximize">□</span>
+          <span class="btn close" title="Close">×</span>
+        </div>
+      </div>
+      <div class="modal-body">
+        <div class="sidebar">
+          <ul id="sidebar-tabs">
+            <li data-section="Desktop" class="active">🖥️ Desktop</li>
+            <li data-section="Downloads">📥 Downloads</li>
+            <li data-section="Music">🎵 Music</li>
+            <li data-section="Documents">📄 Documents</li>
+          </ul>
+        </div>
+        <div class="content" id="modal-content">
+          <p>You're viewing your <strong>Desktop</strong> files.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================= Contact Modal ========================= -->
+    <div id="contact-modal" class="modal hidden">
+      <div class="modal-header">
+        <div class="modal-title">Contact Me</div>
+        <div class="window-controls">
+          <span class="btn minimize">&#x2212;</span>
+          <span class="btn restore">&#x25A1;</span>
+          <span class="btn close">×</span>
+        </div>
+      </div>
+      <div class="modal-body" style="flex-direction: column; padding: 20px">
+        <label>Name:</label>
+        <input
+          type="text"
+          placeholder="Your Name"
+          style="padding: 8px; margin-bottom: 10px; width: 100%"
+        />
+        <label>Email Address:</label>
+        <input
+          type="email"
+          placeholder="you@example.com"
+          style="padding: 8px; margin-bottom: 10px; width: 100%"
+        />
+        <label>Message:</label>
+        <textarea
+          placeholder="Your message..."
+          rows="5"
+          style="padding: 8px; width: 100%; margin-bottom: 10px"
+        ></textarea>
+        <button
+          style="
+            padding: 10px 16px;
+            background: #4ade80;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+          "
+        >
+          Submit
+        </button>
+      </div>
+    </div>
+
+    <!-- ========================= Terminal Modal ========================= -->
+    <div id="terminal-modal" class="modal hidden">
+      <div class="modal-header">
+        <div class="modal-title">Terminal</div>
+        <div class="window-controls">
+          <span class="btn minimize">−</span>
+          <span class="btn restore">□</span>
+          <span class="btn close">×</span>
+        </div>
+      </div>
+      <div
+        class="modal-body"
+        style="
+          background: #000;
+          color: #0f0;
+          font-family: monospace;
+          font-size: 14px;
+          padding: 10px;
+          flex-direction: column;
+          overflow-y: auto;
+        "
+      >
+        <pre id="terminal-output">Welcome to Sen OS Terminal\n$</pre>
+        <input
+          id="terminal-input"
+          type="text"
+          placeholder="Type commands here..."
+          style="
+            background: #000;
+            color: #0f0;
+            border: none;
+            outline: none;
+            width: 100%;
+            font-family: monospace;
+            font-size: 14px;
+          "
+        />
+      </div>
+    </div>
+
+    <!-- ========================= Notepad Modal ========================= -->
+    <div id="notepad-modal" class="modal hidden">
+      <div class="modal-header">
+        <div class="modal-title">Notepad</div>
+        <div class="window-controls">
+          <span class="btn minimize">−</span>
+          <span class="btn restore">□</span>
+          <span class="btn close">×</span>
+        </div>
+      </div>
+      <div class="modal-body" style="flex-direction: column; padding: 10px">
+        <textarea
+          id="notepad-textarea"
+          style="
+            width: 100%;
+            height: 100%;
+            border: none;
+            resize: none;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+          "
+        ></textarea>
+      </div>
+    </div>
+
+    <!-- ========================= Games Modal ========================= -->
+    <div id="games-modal" class="modal hidden">
+      <div class="modal-header">
+        <div class="modal-title">Games</div>
+        <div class="window-controls">
+          <span class="btn minimize">−</span>
+          <span class="btn restore">□</span>
+          <span class="btn close">×</span>
+        </div>
+      </div>
+      <div
+        class="modal-body"
+        style="
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 1.2rem;
+          color: #666;
+        "
+      >
+        <p>Games coming soon... Stay tuned!</p>
+      </div>
+    </div>
+
+    <!-- ========================= Photoshop Modal ========================= -->
+    <div id="photoshop-modal" class="modal hidden">
+      <div class="modal-header">
+        <div class="modal-title">Photoshop</div>
+        <div class="window-controls">
+          <span class="btn minimize">−</span>
+          <span class="btn restore">□</span>
+          <span class="btn close">×</span>
+        </div>
+      </div>
+      <div class="modal-body" style="flex-direction: column; padding: 10px">
+        <h3>Recent Pictures</h3>
+        <div
+          id="recent-pictures"
+          style="display: flex; gap: 10px; flex-wrap: wrap"
+        >
+          <div
+            style="
+              width: 100px;
+              height: 70px;
+              background: #ccc;
+              border: 1px solid #999;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              color: #666;
+            "
+          >
+            No images yet
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================= Projects Modal ========================= -->
+    <div id="projects-modal" class="modal hidden">
+      <div class="modal-header">
+        <div class="modal-title">My Projects</div>
+        <div class="window-controls">
+          <span class="btn minimize">&#x2212;</span>
+          <span class="btn restore">&#x25A1;</span>
+          <span class="btn close">×</span>
+        </div>
+      </div>
+      <div class="modal-body" style="flex-direction: column; padding: 20px">
+        <div class="projects-grid" id="projects-list">
+          <!-- JS will populate this -->
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================= Trash Modal ========================= -->
+    <div id="trash-modal" class="modal hidden">
+      <div class="modal-header">
+        <div class="modal-title">Trash Bin</div>
+        <div class="window-controls">
+          <span class="btn minimize">−</span>
+          <span class="btn restore">□</span>
+          <span class="btn close">×</span>
+        </div>
+      </div>
+      <div
+        class="modal-body"
+        style="padding: 20px; flex-direction: column; gap: 10px"
+      >
+        <p>Nothing to see here...</p>
+        <p style="font-size: 0.9rem; opacity: 0.6">(Or is there?)</p>
+        <button
+          style="
+            padding: 8px 12px;
+            background: #f87171;
+            color: white;
+            border: none;
+            border-radius: 4px;
+          "
+        >
+          Empty Trash
+        </button>
+      </div>
+    </div>
+
+    <!-- ========================= Browser Modal ========================= -->
+    <div id="browser-modal" class="modal hidden">
+      <div class="modal-header">
+        <div class="modal-title">Sen Edge - Tabbed Browser</div>
+        <div class="window-controls">
+          <span class="btn minimize">−</span>
+          <span class="btn restore">□</span>
+          <span class="btn close">×</span>
+        </div>
+      </div>
+      <div class="modal-body" style="flex-direction: column; padding: 0">
+        <!-- Tab Bar -->
+        <div
+          id="browser-tabs"
+          style="display: flex; background: #eee; border-bottom: 1px solid #ccc"
+        >
+          <button data-url="https://github.com/Sen-Sen19" class="tab active">
+            GitHub
+          </button>
+          <button data-url="https://example.com/fakebook" class="tab">
+            Facebook
+          </button>
+          <button data-url="https://chat.openai.com/" class="tab">
+            ChatGPT
+          </button>
+          <button data-url="https://news.ycombinator.com/" class="tab">
+            Tech News
+          </button>
+          <button data-url="https://theuselessweb.com/" class="tab">???</button>
+        </div>
+
+        <!-- Toolbar -->
+        <div
+          style="
+            padding: 6px;
+            background: #f9f9f9;
+            border-bottom: 1px solid #ccc;
+          "
+        >
+          <input
+            id="browser-url"
+            type="text"
+            value="https://github.com/"
+            style="width: 100%; padding: 6px; font-size: 0.9rem"
+          />
+        </div>
+
+        <!-- Iframe -->
+        <iframe
+          id="browser-frame"
+          src="https://github.com/"
+          style="flex-grow: 1; width: 100%; border: none"
+        ></iframe>
+      </div>
+    </div>
+
+    <script src="loading.js"></script>
+    <script type="module" src="windowManager.js"></script>
+    <script src="clock.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <script type="module">
+      import { WindowManager } from "./windowManager.js";
+
+             // <!-- ========================= Files Modal ========================= -->
+      const filesWindow = new WindowManager({
+        modalId: "files-modal",
+        iconSelector: ".icon img[src*='folder-invoices']",
+        taskbarSelector:
+          ".taskbar-left .taskbar-icon img[src*='folder-invoices']",
+        restoreDefaults: {
+          top: "100px",
+          left: "100px",
+          width: "650px",
+          height: "400px",
+        },
+        sections: {
+          Desktop: "You're viewing your <strong>Desktop</strong> files.",
+          Downloads: "Here's everything you've <strong>Downloaded</strong>.",
+          Music: "Your favorite <strong>Music</strong> lives here.",
+          Documents: "Important <strong>Documents</strong> stored safely.",
+        },
+      });
+
+        // <!-- ========================= Contact Modal ========================= -->
+      const contactWindow = new WindowManager({
+        modalId: "contact-modal",
+        iconSelector: ".icon img[src*='email-open']", // ✅ NEW image URL
+        taskbarSelector: ".taskbar-left .taskbar-icon img[src*='email-open']", // ✅ match new icon
+
+        restoreDefaults: {
+          top: "160px",
+          left: "200px",
+          width: "500px",
+          height: "400px",
+        },
+      });
+
+        // <!-- =========================   Terminal Modal ========================= -->
+      const terminalWindow = new WindowManager({
+        modalId: "terminal-modal",
+        iconSelector: ".icon img[src*='console']",
+        taskbarSelector: ".taskbar-left .taskbar-icon img[src*='console']",
+        restoreDefaults: {
+          top: "120px",
+          left: "150px",
+          width: "600px",
+          height: "350px",
+        },
+      });
+
+        // <!-- ========================= Notepad Modal ========================= -->
+      const notepadWindow = new WindowManager({
+        modalId: "notepad-modal",
+        iconSelector: ".icon img[src*='note']", // ✅ NEW
+        taskbarSelector: ".taskbar-left .taskbar-icon img[src*='note']", // ✅ NEW
+
+        restoreDefaults: {
+          top: "140px",
+          left: "180px",
+          width: "550px",
+          height: "400px",
+        },
+      });
+
+        // <!-- ========================= Games Modal ========================= -->
+      const gamesWindow = new WindowManager({
+        modalId: "games-modal",
+        iconSelector: ".icon img[src*='controller']",
+        taskbarSelector: ".taskbar-left .taskbar-icon img[src*='controller']",
+        restoreDefaults: {
+          top: "130px",
+          left: "220px",
+          width: "600px",
+          height: "400px",
+        },
+      });
+
+        // <!-- ========================= Photoshop Modal ========================= -->
+      const photoshopWindow = new WindowManager({
+        modalId: "photoshop-modal",
+        iconSelector:
+          ".taskbar-left .taskbar-icon img[src*='adobe-photoshop--v1']",
+        taskbarSelector:
+          ".taskbar-left .taskbar-icon img[src*='adobe-photoshop--v1']",
+        restoreDefaults: {
+          top: "150px",
+          left: "260px",
+          width: "700px",
+          height: "450px",
+        },
+      });
+
+        // <!-- ========================= Trash Modal ========================= -->
+      const trashWindow = new WindowManager({
+        modalId: "trash-modal",
+        iconSelector: ".icon img[src*='trash']",
+        taskbarSelector: ".taskbar-left .taskbar-icon img[src*='trash']",
+        restoreDefaults: {
+          top: "120px",
+          left: "220px",
+          width: "400px",
+          height: "300px",
+        },
+      });
+
+        // <!-- ========================= Browser Modal ========================= -->
+      const browserWindow = new WindowManager({
+        modalId: "browser-modal",
+        iconSelector: ".icon img[src*='internet']",
+        taskbarSelector: ".taskbar-left .taskbar-icon img[src*='internet']",
+        restoreDefaults: {
+          top: "180px",
+          left: "300px",
+          width: "800px",
+          height: "600px",
+        },
+      });
+      document
+        .getElementById("browser-url")
+        ?.addEventListener("change", function () {
+          const url = this.value;
+          const iframe = document.getElementById("browser-frame");
+          iframe.src = url;
+        });
+    </script>
+  </body>
+</html>

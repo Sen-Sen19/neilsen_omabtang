@@ -1,0 +1,23 @@
+<div id="browser-modal" class="modal hidden">
+  <div class="modal-header">
+    <div class="modal-title">Sen Edge - Tabbed Browser</div>
+    <div class="window-controls">
+      <span class="btn minimize">−</span>
+      <span class="btn restore">□</span>
+      <span class="btn close">×</span>
+    </div>
+  </div>
+  <div class="modal-body" style="flex-direction: column; padding: 0">
+    <div id="browser-tabs" style="display: flex; background: #eee; border-bottom: 1px solid #ccc">
+      <button data-url="https://github.com/" class="tab active">GitHub</button>
+      <button data-url="https://example.com/fakebook" class="tab">Facebook</button>
+      <button data-url="https://chat.openai.com/" class="tab">ChatGPT</button>
+      <button data-url="https://news.ycombinator.com/" class="tab">Tech News</button>
+      <button data-url="https://theuselessweb.com/" class="tab">???</button>
+    </div>
+    <div style="padding: 6px; background: #f9f9f9; border-bottom: 1px solid #ccc;">
+      <input id="browser-url" type="text" value="https://github.com/" style="width: 100%; padding: 6px; font-size: 0.9rem" />
+    </div>
+    <iframe id="browser-frame" src="https://github.com/" style="flex-grow: 1; width: 100%; border: none"></iframe>
+  </div>
+</div>
