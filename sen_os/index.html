@@ -7,7 +7,7 @@
     <link href="style.css" rel="stylesheet" />
     <title>Sen OS - XXI</title>
     <style>
-      #desktop {
+      /* #desktop {
       display: none;
         width: 100vw;
         height: 100vh;
@@ -19,23 +19,23 @@
         }
 .desktop-icons span {
   color: black !important;
-}
+} */
       /* #desktop {
-        display: none;so
+        display: none;
         width: 100vw;
         height: 100vh;
         background: #fff;
         color: #fff;
         position: relative;
       } */
-      /* #desktop {
+      #desktop {
         display: none;
         width: 100vw;
         height: 100vh;
         background: #1b1b1b;
         color: #fff;
         position: relative;
-      } */
+      }
 
       .modal {
         position: absolute;
@@ -185,6 +185,13 @@
         border-bottom: 2px solid dodgerblue;
         font-weight: bold;
       }
+      .tab[data-type="fake"],
+.tab[data-type="alert"] {
+  opacity: 0.8;
+  cursor: not-allowed;
+}
+
+
     </style>
   </head>
   <body>
@@ -212,7 +219,7 @@
         <div class="icon">
           <img src="https://img.icons8.com/fluency/48/filled-trash.png" />
 
-          <span>Trash</span>
+          <span>Recycle Bin</span>
         </div>
 
         <!-- 🌐 Sen Edge Browser -->
@@ -527,34 +534,174 @@
     </div>
 
     <!-- ========================= Trash Modal ========================= -->
-    <div id="trash-modal" class="modal hidden">
-      <div class="modal-header">
-        <div class="modal-title">Trash Bin</div>
-        <div class="window-controls">
-          <span class="btn minimize">−</span>
-          <span class="btn restore">□</span>
-          <span class="btn close">×</span>
-        </div>
-      </div>
-      <div
-        class="modal-body"
-        style="padding: 20px; flex-direction: column; gap: 10px"
-      >
-        <p>Nothing to see here...</p>
-        <p style="font-size: 0.9rem; opacity: 0.6">(Or is there?)</p>
-        <button
-          style="
-            padding: 8px 12px;
-            background: #f87171;
-            color: white;
-            border: none;
-            border-radius: 4px;
-          "
-        >
-          Empty Trash
-        </button>
-      </div>
+<div id="trash-modal" class="modal hidden">
+  <div class="modal-header">
+    <div class="modal-title">Trash Bin</div>
+    <div class="window-controls">
+      <span class="btn minimize">−</span>
+      <span class="btn restore">□</span>
+      <span class="btn close">×</span>
     </div>
+  </div>
+  
+  <!-- Updated modal body -->
+  <div
+    class="modal-body"
+    style="padding: 20px; display: flex; flex-direction: column; gap: 10px; height: 100%;"
+  >
+    <div
+      class="trash-content-container"
+      style="flex: 1; overflow-y: auto; max-height: 800px; padding-right: 5px;"
+    >
+      <!-- Column Headers -->
+      <div style="display: grid; grid-template-columns: 1.5fr 2fr 1.5fr 1fr 1fr; font-weight: bold; font-size: 0.9rem; padding: 5px 0; border-bottom: 1px solid #ccc;">
+        <div>Name</div>
+        <div>Original Location</div>
+        <div>Date Deleted</div>
+        <div>Size</div>
+        <div>Item Type</div>
+      </div>
+
+      <!-- Trash Items -->
+      <!-- Put your long list of file rows here (already perfectly formatted) -->
+      <!-- Snipped below for brevity, paste your full list in place -->
+      <!-- START COPY PASTE -->
+ 
+<div style="display: grid; grid-template-columns: 24px 1.5fr 2fr 1.5fr 1fr 1fr; font-size: 0.95rem; padding: 6px 0; border-bottom: 1px dotted #ccc; align-items: center;">
+  <img src="../img/txt.png" alt="doc icon" style="width: 20px; height: 20px;" />
+  <div>my_life.txt</div>
+  <div>/Documents/Journal/</div>
+  <div>2025-06-12</div>
+  <div>12 KB</div>
+  <div>Text File</div>
+</div>
+
+<div style="display: grid; grid-template-columns: 24px 1.5fr 2fr 1.5fr 1fr 1fr; font-size: 0.95rem; padding: 6px 0; border-bottom: 1px dotted #ccc; align-items: center;">
+  <img src="../img/doc.png" alt="doc icon" style="width: 20px; height: 20px;" />
+  <div>lastlastlastV2.docx</div>
+  <div>/Work/Chaos/</div>
+  <div>2025-07-02</div>
+  <div>42 KB</div>
+  <div>Word Doc</div>
+</div>
+
+<div style="display: grid; grid-template-columns: 24px 1.5fr 2fr 1.5fr 1fr 1fr; font-size: 0.95rem; padding: 6px 0; border-bottom: 1px dotted #ccc; align-items: center;">
+  <img src="../img/zip-folder.png" alt="zip icon" style="width: 20px; height: 20px;" />
+  <div>backup_of_backup_FINAL(3)_real.zip</div>
+  <div>/Archives/Backups/</div>
+  <div>2025-06-18</div>
+  <div>512 MB</div>
+  <div>ZIP Archive</div>
+</div>
+
+<div style="display: grid; grid-template-columns: 24px 1.5fr 2fr 1.5fr 1fr 1fr; font-size: 0.95rem; padding: 6px 0; border-bottom: 1px dotted #ccc; align-items: center;">
+  <img src="../img/mp3.png" alt="mp3 icon" style="width: 20px; height: 20px;" />
+  <div>emo_playlist_but_only_1_song.mp3</div>
+  <div>/Music/Feels/</div>
+  <div>2025-05-30</div>
+  <div>5 MB</div>
+  <div>Audio File</div>
+</div>
+
+<div style="display: grid; grid-template-columns: 24px 1.5fr 2fr 1.5fr 1fr 1fr; font-size: 0.95rem; padding: 6px 0; border-bottom: 1px dotted #ccc; align-items: center;">
+  <img src="../img/folder.png" alt="folder icon" style="width: 20px; height: 20px;" />
+  <div>new_folder (1) (2) (final) (really_final)</div>
+  <div>/Desktop/Stuff/</div>
+  <div>2025-04-21</div>
+  <div>—</div>
+  <div>Folder</div>
+</div>
+
+<div style="display: grid; grid-template-columns: 24px 1.5fr 2fr 1.5fr 1fr 1fr; font-size: 0.95rem; padding: 6px 0; border-bottom: 1px dotted #ccc; align-items: center;">
+  <img src="../img/exe.png" alt="exe icon" style="width: 20px; height: 20px;" />
+  <div>dont_open_this_ever_again.exe</div>
+  <div>/Cursed/Secrets/</div>
+  <div>2025-07-01</div>
+  <div>1.2 MB</div>
+  <div>Executable</div>
+</div>
+
+<div style="display: grid; grid-template-columns: 24px 1.5fr 2fr 1.5fr 1fr 1fr; font-size: 0.95rem; padding: 6px 0; border-bottom: 1px dotted #ccc; align-items: center;">
+  <img src="../img/mp3.png" alt="mp3 icon" style="width: 20px; height: 20px;" />
+  <div>playlist_of_sadness.mp3</div>
+  <div>/Music/Feels/</div>
+  <div>2025-06-25</div>
+  <div>97 KB</div>
+  <div>Audio File</div>
+</div>
+
+<div style="display: grid; grid-template-columns: 24px 1.5fr 2fr 1.5fr 1fr 1fr; font-size: 0.95rem; padding: 6px 0; border-bottom: 1px dotted #ccc; align-items: center;">
+  <img src="../img/zip-folder.png" alt="zip icon" style="width: 20px; height: 20px;" />
+  <div>breakup_chat_screenshot_collection.ZIP</div>
+  <div>/Photos/Screenshots/</div>
+  <div>2025-07-07</div>
+  <div>33 MB</div>
+  <div>ZIP Archive</div>
+</div>
+
+<div style="display: grid; grid-template-columns: 24px 1.5fr 2fr 1.5fr 1fr 1fr; font-size: 0.95rem; padding: 6px 0; border-bottom: 1px dotted #ccc; align-items: center;">
+  <img src="../img/py.png" alt="python icon" style="width: 20px; height: 20px;" />
+  <div>AI_that_loves_me_back.py</div>
+  <div>/Projects/Lab/</div>
+  <div>2025-06-13</div>
+  <div>3 KB</div>
+  <div>Python Script</div>
+</div>
+
+<div style="display: grid; grid-template-columns: 24px 1.5fr 2fr 1.5fr 1fr 1fr; font-size: 0.95rem; padding: 6px 0; border-bottom: 1px dotted #ccc; align-items: center;">
+  <img src="../img/zip-folder.png" alt="zip icon" style="width: 20px; height: 20px;" />
+  <div>moon_landing_conspiracy_meme_pack.zip</div>
+  <div>/Downloads/Memes/</div>
+  <div>2025-03-28</div>
+  <div>27 MB</div>
+  <div>ZIP Archive</div>
+</div>
+
+<div style="display: grid; grid-template-columns: 24px 1.5fr 2fr 1.5fr 1fr 1fr; font-size: 0.95rem; padding: 6px 0; border-bottom: 1px dotted #ccc; align-items: center;">
+  <img src="../img/jpg.png" alt="jpg icon" style="width: 20px; height: 20px;" />
+  <div>selfie_with_alien_NOT_FAKE.jpg</div>
+  <div>/Pictures/Proof/</div>
+  <div>2025-06-06</div>
+  <div>2.1 MB</div>
+  <div>Image File</div>
+</div>
+
+<div style="display: grid; grid-template-columns: 24px 1.5fr 2fr 1.5fr 1fr 1fr; font-size: 0.95rem; padding: 6px 0; border-bottom: 1px dotted #ccc; align-items: center;">
+  <img src="../img/diskette.png" alt="sav icon" style="width: 20px; height: 20px;" />
+  <div>save_me_pls.sav</div>
+  <div>/Games/Saves/</div>
+  <div>2025-06-22</div>
+  <div>600 KB</div>
+  <div>Save File</div>
+</div>
+
+<div style="display: grid; grid-template-columns: 24px 1.5fr 2fr 1.5fr 1fr 1fr; font-size: 0.95rem; padding: 6px 0; align-items: center;">
+  <img src="../img/doc.png" alt="doc icon" style="width: 20px; height: 20px;" />
+  <div>hope.docx</div>
+  <div>/Emotions/Final_Straw/</div>
+  <div>2025-07-09</div>
+  <div>23 KB</div>
+  <div>Word Doc</div>
+</div>
+      <!-- END COPY PASTE -->
+    </div>
+
+    <!-- Optional Footer Button -->
+    <button
+      style="
+        padding: 8px 12px;
+        background: #f87171;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        align-self: flex-end;
+      "
+    >
+      Empty Trash
+    </button>
+  </div>
+</div>
+
 
     <!-- ========================= Browser Modal ========================= -->
     <div id="browser-modal" class="modal hidden">
@@ -568,24 +715,17 @@
       </div>
       <div class="modal-body" style="flex-direction: column; padding: 0">
         <!-- Tab Bar -->
-        <div
-          id="browser-tabs"
-          style="display: flex; background: #eee; border-bottom: 1px solid #ccc"
-        >
-          <button data-url="https://github.com/Sen-Sen19" class="tab active">
-            GitHub
-          </button>
-          <button data-url="https://example.com/fakebook" class="tab">
-            Facebook
-          </button>
-          <button data-url="https://chat.openai.com/" class="tab">
-            ChatGPT
-          </button>
-          <button data-url="https://news.ycombinator.com/" class="tab">
-            Tech News
-          </button>
-          <button data-url="https://theuselessweb.com/" class="tab">???</button>
-        </div>
+<div id="browser-tabs" style="display: flex; background: #eee; border-bottom: 1px solid #ccc">
+    <div class="tab" data-url="https://theuselessweb.com" data-type="external">The Useless Web</div>
+    <div class="tab" data-url="https://facebook.cmo" data-type="fake">Facebook</div>
+  <div class="tab" data-url="https://github.com/Sen-Sen19/" data-type="external">GitHub</div>
+  <div class="tab" data-type="alert" data-name="Canva">Canva</div>
+  <div class="tab" data-type="alert" data-name="Figma">Figma</div>
+
+</div>
+
+
+
 
         <!-- Toolbar -->
         <div
@@ -598,17 +738,25 @@
           <input
             id="browser-url"
             type="text"
-            value="https://github.com/"
+            value="https://github.com/Sen-Sen19/"
             style="width: 100%; padding: 6px; font-size: 0.9rem"
           />
         </div>
 
         <!-- Iframe -->
-        <iframe
-          id="browser-frame"
-          src="https://github.com/"
-          style="flex-grow: 1; width: 100%; border: none"
-        ></iframe>
+       <iframe
+  id="browser-frame"
+  src="https://theuselessweb.com"
+  style="flex-grow: 1; width: 100%; border: none"
+></iframe>
+
+<input
+  id="browser-url"
+  type="text"
+  value=""
+  style="width: 100%; padding: 6px; font-size: 0.9rem"
+/>
+
       </div>
     </div>
 
@@ -748,24 +896,68 @@
       });
 
         // <!-- ========================= Browser Modal ========================= -->
-      const browserWindow = new WindowManager({
-        modalId: "browser-modal",
-        iconSelector: ".icon img[src*='internet']",
-        taskbarSelector: ".taskbar-left .taskbar-icon img[src*='internet']",
-        restoreDefaults: {
-          top: "180px",
-          left: "300px",
-          width: "800px",
-          height: "600px",
-        },
-      });
-      document
-        .getElementById("browser-url")
-        ?.addEventListener("change", function () {
-          const url = this.value;
-          const iframe = document.getElementById("browser-frame");
-          iframe.src = url;
-        });
+const browserWindow = new WindowManager({
+  modalId: "browser-modal",
+  iconSelector: ".icon img[src*='internet']",
+  taskbarSelector: ".taskbar-left .taskbar-icon img[src*='internet']",
+  restoreDefaults: {
+    top: "180px",
+    left: "300px",
+    width: "800px",
+    height: "600px",
+  },
+});
+
+document.querySelectorAll("#browser-tabs .tab").forEach((tab) => {
+  tab.addEventListener("click", () => {
+    const type = tab.dataset.type;
+    const url = tab.dataset.url;
+    const name = tab.dataset.name;
+
+    switch (type) {
+      case "external":
+        document.getElementById("browser-frame").src = url;
+        document.getElementById("browser-url").value = url;
+        break;
+
+      case "alert":
+        if (name === "Canva") {
+          alert("Launching Canva Pro Mode...\n\nJust kidding. You’re already a design god.");
+        } else if (name === "Figma") {
+          alert("Opening Figma...\n\nDesign system? Done. Auto-layout? Mastered.");
+        }
+        break;
+
+      case "fake":
+        const fakeFacebookHTML = `
+<html style="font-family: 'Segoe UI', sans-serif; background: #fff; display: flex; align-items: center; justify-content: center; height: 100vh;">
+  <body>
+    <div style="text-align: center; max-width: 400px; padding: 20px;">
+      <h1 style="font-size: 2.5em; color: #1877f2;">facebook.cmo?</h1>
+      <p style="font-size: 1.1em;">Oops. You messed up the URL.</p>
+      <p>Even this panda is flipping tables over it.</p>
+
+      <img src="https://media.giphy.com/media/EPcvhM28ER9XW/giphy.gif" alt="Angry Panda" style="margin: 20px 0; max-width: 100%; height: 180px; border-radius: 8px;" />
+      
+      <p style="color: #666;">Take a breath. Then type “.com” like a normal person.</p>
+      <button style="margin-top: 20px; padding: 10px 20px; background: #1877f2; color: white; border: none; border-radius: 5px; cursor: not-allowed;">Try Again</button>
+    </div>
+  </body>
+</html>
+
+
+        `;
+        const blob = new Blob([fakeFacebookHTML], { type: "text/html" });
+        const fakeURL = URL.createObjectURL(blob);
+        document.getElementById("browser-frame").src = fakeURL;
+        document.getElementById("browser-url").value = "https://facebook.cmo";
+        break;
+    }
+  });
+});
+
+
+
     </script>
   </body>
 </html>

@@ -276,20 +276,27 @@ projects.forEach(proj => {
 
 
 
+const tabs = document.querySelectorAll('#browser-tabs .tab');
+const iframe = document.getElementById('browser-frame');
+const urlBar = document.getElementById('browser-url');
 
-const browserTabs = document.querySelectorAll("#browser-tabs .tab");
-const browserUrlInput = document.getElementById("browser-url");
-const browserIframe = document.getElementById("browser-frame");
-
-browserTabs.forEach(tab => {
-  tab.addEventListener("click", () => {
-    browserTabs.forEach(t => t.classList.remove("active"));
-    tab.classList.add("active");
+tabs.forEach(tab => {
+  tab.addEventListener('click', () => {
     const url = tab.dataset.url;
-    browserUrlInput.value = url;
-    browserIframe.src = url;
+    const type = tab.dataset.type;
+
+    tabs.forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+
+    if (type === 'external') {
+      window.open(url, '_blank');
+    } else {
+      iframe.src = url;
+      urlBar.value = url;
+    }
   });
 });
+
 
 // browserUrlInput.addEventListener("change", () => {
 //   browserIframe.src = browserUrlInput.value;

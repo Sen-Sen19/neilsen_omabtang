@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Azra</title>
+  
+<style>
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', sans-serif;
+    background-color: #0d0d0d;
+    color: #e0e0e0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+  }
+
+  h2#title {
+    margin: 24px 0 16px;
+    font-size: 28px;
+    color: #fff;
+    text-shadow: 0 0 5px #4fc3f7;
+    text-align: center;
+  }
+
+  .chat-container {
+    width: 95%;
+    max-width: 800px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 16px;
+    box-sizing: border-box;
+  }
+
+  #chat {
+    flex: 1;
+    overflow-y: auto;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid #2a2a2a;
+    border-radius: 14px;
+    padding: 15px;
+    margin-bottom: 14px;
+    backdrop-filter: blur(4px);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-height: 300px;
+    max-height: 60vh;
+  }
+
+  #chat p {
+    padding: 10px 14px;
+    border-radius: 14px;
+    max-width: 75%;
+    word-wrap: break-word;
+    line-height: 1.5;
+    display: inline-block;
+  }
+
+  #chat p.user {
+    background: #1e3a5f;
+    color: #d4edff;
+    align-self: flex-end;
+    text-align: right;
+  }
+
+  #chat p.assistant {
+    background: #1a1a1a;
+    color: #ffffff;
+    align-self: flex-start;
+    text-align: left;
+  }
+
+.input-container {
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+  justify-content: space-between;
+}
+  #userInput {
+    width: 100%;
+    background: #1a1a1a;
+    color: #fff;
+    border: 1px solid #333;
+    padding: 12px 16px;
+    border-radius: 10px;
+    font-family: monospace;
+    resize: none;
+    min-height: 20px;
+    max-height: 150px;
+    overflow-y: auto;
+    font-size: 14px;
+  }
+
+.button-group {
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+}
+
+  button {
+    flex: 1;
+    background: #222;
+    color: #fff;
+    border: 1px solid #444;
+    padding: 12px 16px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.3s ease;
+  }
+
+  button:hover {
+    background: #333;
+    border-color: #4fc3f7;
+    color: #4fc3f7;
+  }
+
+  pre {
+    background: #111;
+    padding: 12px;
+    border-radius: 8px;
+    overflow-x: auto;
+    margin-top: 10px;
+    font-size: 14px;
+  }
+
+  code {
+    color: #9fefdf;
+    font-family: 'Fira Code', monospace;
+    white-space: pre-wrap;
+  }
+
+  .blinker {
+    display: inline-block;
+    animation: blink 1s infinite;
+  }
+
+  @keyframes blink {
+    0%, 50% { opacity: 1; }
+    51%, 100% { opacity: 0; }
+  }
+
+  @media (min-width: 700px) {
+    .input-container {
+      flex-direction: row;
+      align-items: flex-start;
+    }
+
+    #userInput {
+      flex: 1;
+    }
+
+    .button-group {
+      flex-direction: row;
+      width: auto;
+    }
+  }
+</style>
+</head>
+<body>
+  <h2 id="title">Azra</h2>
+
+  <main class="chat-container">
+    <div id="chat"></div>
+
+    <div class="input-container">
+  <div class="button-group">
+    <button onclick="clearChat()"> Clear</button>
+ 
+  </div>
+  <textarea id="userInput" placeholder="Talk to Azra..." rows="1"></textarea>
+
+  <div class="button-group">
+    
+    <button onclick="sendMessage()">Send</button>
+  </div>
+    </div>
+  </main>
+
+
+<script>
+    let isCleared = false;
+    const apiKey = "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";
+  const chatDiv = document.getElementById("chat");
+  const input = document.getElementById("userInput");
+
+  const creatorName = "Sen";
+  const assistantName = "Azra";
+let userName = localStorage.getItem("azra_user_name") || "Guest";
+window.addEventListener("DOMContentLoaded", () => {
+  if (userName && userName !== "Guest") {
+    updateChat(`Welcome back, <strong>${userName}</strong>!`, "assistant");
+  }
+});
+
+let chatLog = [
+  {
+    role: "system",
+    content: `
+You are ${assistantName}, a smart and friendly assistant created by ${creatorName}.
+The user's name is "${userName}". Speak to them using their name when appropriate.
+Do not offer or include any code (HTML, CSS, JS, etc.) unless the user specifically requests it.
+Never include example code in greetings or general conversation.
+Only provide code in markdown blocks (surrounded by triple backticks) if the user's message clearly implies a need for it.
+Avoid hallucinating HTML, JS, or code unless the user asks for it directly.
+Always speak clearly and conversationally, like a helpful assistant.
+    `.trim()
+  }
+];
+
+
+  function escapeHTML(str) {
+    return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+
+  function updateChat(message, sender = "assistant") {
+    const p = document.createElement("p");
+    p.className = sender;
+
+    if (sender === "user") {
+      message = escapeHTML(message);
+    }
+
+    message = message.replace(/```(\w+)?\n?([^]+?)```/g, (_, lang, code) => {
+      const escaped = code
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+      return `<pre><code class="${lang || ''}">${escaped}</code></pre>`;
+    });
+
+    p.innerHTML = message;
+    chatDiv.appendChild(p);
+    chatDiv.scrollTop = chatDiv.scrollHeight;
+  }
+
+  function detectNameFromInput(text) {
+    const match = text.match(/my name is ([a-zA-Z\s]+)/i);
+    if (match) {
+      const name = match[1].trim();
+      if (name.length > 0) {
+        localStorage.setItem("azra_user_name", name);
+        userName = name;
+        updateChat(`🧠 Azra has learned your name is <strong>${userName}</strong>.`, "assistant");
+      }
+    }
+  }
+function clearChat() {
+  isCleared = true;
+  clearInterval(thinkingInterval);
+  chatLog = [chatLog[0]];
+  chatDiv.innerHTML = "";
+  userName = localStorage.getItem("azra_user_name") || "Guest"; // 🔄 Refresh name
+}
+
+  input.addEventListener("keydown", function (e) {
+    if (e.key === "Enter") {
+      if (e.shiftKey) {
+        e.preventDefault();
+        const start = this.selectionStart;
+        const end = this.selectionEnd;
+        this.value = this.value.substring(0, start) + "\n" + this.value.substring(end);
+        this.selectionStart = this.selectionEnd = start + 1;
+      } else {
+        e.preventDefault();
+        sendMessage();
+      }
+    }
+  });
+
+  let thinkingInterval = null;
+  function showThinking() {
+    const p = document.createElement("p");
+    p.className = "assistant";
+    p.id = "thinking";
+    let dots = 0;
+
+    chatDiv.appendChild(p);
+    chatDiv.scrollTop = chatDiv.scrollHeight;
+
+    thinkingInterval = setInterval(() => {
+      dots = (dots + 1) % 4;
+      const dotStr = ".".repeat(dots);
+      p.innerHTML = `Thinking${dotStr}`;
+      chatDiv.scrollTop = chatDiv.scrollHeight;
+    }, 500);
+  }
+
+  function hideThinking() {
+    clearInterval(thinkingInterval);
+    const thinkingEl = document.getElementById("thinking");
+    if (thinkingEl) {
+      thinkingEl.remove();
+    }
+  }
+async function fetchNews() {
+  try {
+    const res = await fetch("news.php");
+    const data = await res.json();
+
+    if (!data.articles || data.articles.length === 0) {
+      updateChat("⚠️ No news found.", "assistant");
+      return;
+    }
+
+    let newsHtml = "<strong>🗞️ Latest News:</strong><br><ul>";
+    data.articles.slice(0, 5).forEach(article => {
+      newsHtml += `<li><a href="${article.url}" target="_blank">${article.title}</a></li>`;
+    });
+    newsHtml += "</ul>";
+
+    updateChat(newsHtml, "assistant");
+  } catch (err) {
+    updateChat("⚠️ Couldn't fetch news. Please try again later.", "assistant");
+  }
+}
+
+
+async function sendMessage() {
+  const userMessage = input.value.trim();
+  if (!userMessage) return;
+
+  if (userMessage.toLowerCase().includes("news")) {
+    updateChat(`${userMessage}`, "user");
+    input.value = "";
+    await fetchNews();
+    return;
+  }
+
+    detectNameFromInput(userMessage);
+    chatLog.push({ role: "user", content: userMessage });
+
+    updateChat(`${userMessage}`, "user");
+    input.value = "";
+
+    showThinking();
+
+    const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${apiKey}`,
+        "HTTP-Referer": "http://localhost",
+        "X-Title": "Azra Memory",
+      },
+      body: JSON.stringify({
+        model: "mistralai/mistral-7b-instruct",
+        messages: chatLog.slice(-10),
+      }),
+    });
+
+    const data = await res.json();
+    hideThinking();
+
+    const reply = data.choices?.[0]?.message?.content || "⚠️ Azra couldn't respond.";
+    chatLog.push({ role: "assistant", content: reply });
+
+    await typeLikeAzra(reply, "assistant");
+  }
+async function typeLikeAzra(text, sender = "assistant", speed = 20) {
+  isCleared = false; // Reset flag for new message
+  const p = document.createElement("p");
+  p.className = sender;
+  chatDiv.appendChild(p);
+  chatDiv.scrollTop = chatDiv.scrollHeight;
+
+  // Format numbered lists and bullet points
+  text = text
+    .replace(/(?:^|\n)(\d+)\.\s(.+?)(?=\n\d+\.|\n*$)/gs, (_, num, item) => `\n<strong>${num}.</strong> ${item.trim()}`)
+    .replace(/(?:^|\n)-\s(.+?)(?=\n-|$)/gs, (_, item) => `\n• ${item.trim()}`)
+    .replace(/\n{2,}/g, '\n\n');
+
+  let i = 0;
+  function typeChar() {
+    if (isCleared) return; // 🚫 Abort typing if chat was cleared
+    if (i <= text.length) {
+      const current = text.slice(0, i);
+      let escaped = current
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+
+      escaped = escaped
+        .replace(/```(\w+)?\n?([^`]+?)```/gs, (_, lang, code) => {
+          return `<pre><code class="${lang || ''}">${code}</code></pre>`;
+        })
+        .replace(/\n/g, '<br>');
+
+      p.innerHTML = `` + escaped + `<span class="blinker">▋</span>`;
+      chatDiv.scrollTop = chatDiv.scrollHeight;
+      i++;
+      setTimeout(typeChar, speed);
+    } else {
+      p.innerHTML = ` ` + p.innerHTML.replace(`<span class="blinker">▋</span>`, "");
+    }
+  }
+
+  typeChar();
+}
+
+</script>
+
+</body>
+</html>

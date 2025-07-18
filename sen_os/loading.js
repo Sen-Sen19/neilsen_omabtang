@@ -72,7 +72,7 @@
         if (!loadingComplete) {
           const randomIndex = Math.floor(Math.random() * messages.length);
           bootLog.textContent = messages[randomIndex];
-          setTimeout(cycleBootMessagesSlowly, 1500);
+          setTimeout(cycleBootMessagesSlowly, 2000);
         }
       }
 
