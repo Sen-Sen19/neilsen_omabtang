@@ -1,201 +1,341 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Azra</title>
-  
-<style>
-  * {
-    box-sizing: border-box;
-  }
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<!-- Prism core -->
+<script src="https://cdn.jsdelivr.net/npm/prismjs/prism.js"></script>
 
-  body {
-    margin: 0;
-    padding: 0;
-    font-family: 'Segoe UI', sans-serif;
-    background-color: #0d0d0d;
-    color: #e0e0e0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    min-height: 100vh;
-  }
+<!-- Optional: Add language support plugins here -->
+<script src="https://cdn.jsdelivr.net/npm/prismjs/components/prism-javascript.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs/components/prism-html.min.js"></script>
+<link href="https://cdn.jsdelivr.net/npm/prismjs/themes/prism-tomorrow.css" rel="stylesheet" />
 
-  h2#title {
-    margin: 24px 0 16px;
-    font-size: 28px;
-    color: #fff;
-    text-shadow: 0 0 5px #4fc3f7;
-    text-align: center;
-  }
 
-  .chat-container {
-    width: 95%;
-    max-width: 800px;
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    padding: 16px;
-    box-sizing: border-box;
-  }
 
-  #chat {
-    flex: 1;
-    overflow-y: auto;
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid #2a2a2a;
-    border-radius: 14px;
-    padding: 15px;
-    margin-bottom: 14px;
-    backdrop-filter: blur(4px);
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    min-height: 300px;
-    max-height: 60vh;
-  }
 
-  #chat p {
-    padding: 10px 14px;
-    border-radius: 14px;
-    max-width: 75%;
-    word-wrap: break-word;
-    line-height: 1.5;
-    display: inline-block;
-  }
+    <title>Azra</title>
 
-  #chat p.user {
-    background: #1e3a5f;
-    color: #d4edff;
-    align-self: flex-end;
-    text-align: right;
-  }
+    <style>
+      * {
+        box-sizing: border-box;
+      }
 
-  #chat p.assistant {
-    background: #1a1a1a;
-    color: #ffffff;
-    align-self: flex-start;
-    text-align: left;
-  }
+      body {
+        margin: 0;
+        padding: 0;
+        font-family: "Segoe UI", sans-serif;
+        background-color: #0d0d0d;
+        color: #e0e0e0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        min-height: 100vh;
+      }
 
-.input-container {
-  display: flex;
-  flex-direction: row;
-  gap: 10px;
-  justify-content: space-between;
+      h2#title {
+        margin: 24px 0 16px;
+        font-size: 28px;
+        color: #fff;
+        text-shadow: 0 0 5px #4fc3f7;
+        text-align: center;
+      }
+
+      .chat-container {
+        width: 95%;
+        max-width: 800px;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        padding: 16px;
+        box-sizing: border-box;
+      }
+
+      #chat {
+        flex: 1;
+        overflow-y: auto;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid #616161;
+        border-radius: 14px;
+        padding: 15px;
+        margin-bottom: 14px;
+        backdrop-filter: blur(4px);
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        min-height: 300px;
+        max-height: 60vh;
+      }
+
+      #chat p {
+        padding: 10px 14px;
+        border-radius: 20px;
+        max-width: 75%;
+        word-wrap: break-word;
+        line-height: 1.5;
+        font-size: 15px;
+        display: inline-block;
+        white-space: pre-wrap;
+      }
+
+      #chat p.user {
+        background: #1e3a5f;
+        color: #d4edff;
+        align-self: flex-end;
+        text-align: right;
+        border-bottom-right-radius: 2px;
+      }
+
+      #chat p.assistant {
+        background: #1a1a1a;
+        color: #ffffff;
+        align-self: flex-start;
+        text-align: left;
+        border-bottom-left-radius: 2px;
+      }
+
+      .input-container {
+        display: flex;
+        align-items: stretch;
+        gap: 10px;
+        width: 100%;
+      }
+
+      #userInput {
+        flex: 1;
+        background: #1a1a1a;
+        color: #fff;
+        border: 1px solid #616161;
+        padding: 12px 16px;
+        border-radius: 10px;
+        font-family: monospace;
+        resize: none;
+        min-height: 42px;
+        max-height: 200px;
+        overflow-y: auto;
+        font-size: 14px;
+        transition: border-color 0.3s;
+      }
+
+      #userInput:focus {
+        border-color: #4fc3f7;
+        outline: none;
+      }
+
+      .button-group {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      button {
+        background: #222;
+        color: #fff;
+        border: 1px solid #616161;
+        padding: 12px 16px;
+        border-radius: 10px;
+        cursor: pointer;
+        font-size: 14px;
+        transition: all 0.3s ease;
+      }
+
+      button:hover {
+        background: #333;
+        border-color: #4fc3f7;
+        color: #4fc3f7;
+      }
+
+      pre {
+        background: #111;
+        padding: 12px;
+        border-radius: 8px;
+        overflow-x: auto;
+        margin-top: 10px;
+        font-size: 14px;
+      }
+
+      code {
+        color: #9fefdf;
+        font-family: "Fira Code", monospace;
+        white-space: pre-wrap;
+      }
+
+      .blinker {
+        display: inline-block;
+        animation: blink 1s infinite;
+      }
+
+      @keyframes blink {
+        0%,
+        50% {
+          opacity: 1;
+        }
+        51%,
+        100% {
+          opacity: 0;
+        }
+      }
+
+      @media (max-width: 600px) {
+        .input-container {
+          flex-direction: column;
+          gap: 8px;
+        }
+
+        .button-group {
+          justify-content: space-between;
+        }
+
+        #userInput {
+          font-size: 13px;
+        }
+
+        button {
+          width: 100%;
+        }
+      }
+
+      #chat::-webkit-scrollbar {
+        width: 6px;
+      }
+
+      #chat::-webkit-scrollbar-track {
+        background: transparent;
+      }
+
+      #chat::-webkit-scrollbar-thumb {
+        background-color: #4fc3f7;
+        border-radius: 10px;
+      }
+
+      #chat {
+        scrollbar-color: #4fc3f7 transparent; /* For Firefox */
+        scrollbar-width: thin;
+      }
+
+      textarea {
+        overflow-y: auto;
+        scrollbar-width: thin;
+        scrollbar-color: #4fc3f7 transparent; /* Firefox */
+      }
+
+      textarea::-webkit-scrollbar {
+        width: 6px;
+      }
+
+      textarea::-webkit-scrollbar-track {
+        background: transparent;
+      }
+
+      textarea::-webkit-scrollbar-thumb {
+        background-color: #4fc3f7;
+        border-radius: 10px;
+      }
+
+
+      pre code {
+  display: block;
+  padding: 1rem;
+  border: 1px solid #00ff88; /* neon green border */
+  border-radius: 0.5rem;
+  background: #0d0d0d; /* dark cyber background */
+  color: #c0fdfb; /* soft cyan font */
+  font-family: 'Fira Code', monospace;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  overflow-x: auto;
+  box-shadow: 0 0 12px #00ff8855;
+  transition: all 0.3s ease;
 }
-  #userInput {
-    width: 100%;
-    background: #1a1a1a;
-    color: #fff;
-    border: 1px solid #333;
-    padding: 12px 16px;
-    border-radius: 10px;
-    font-family: monospace;
-    resize: none;
-    min-height: 20px;
-    max-height: 150px;
-    overflow-y: auto;
-    font-size: 14px;
-  }
 
-.button-group {
-  display: flex;
-  flex-direction: row;
-  gap: 10px;
+/* Add subtle syntax colors if you're not using Prism.js */
+code[class*="language-"] .token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata {
+  color: #6c757d;
 }
 
-  button {
-    flex: 1;
-    background: #222;
-    color: #fff;
-    border: 1px solid #444;
-    padding: 12px 16px;
-    border-radius: 10px;
-    cursor: pointer;
-    font-size: 14px;
-    transition: all 0.3s ease;
-  }
+code[class*="language-"] .token.punctuation {
+  color: #c3e88d;
+}
 
-  button:hover {
-    background: #333;
-    border-color: #4fc3f7;
-    color: #4fc3f7;
-  }
+code[class*="language-"] .token.property,
+.token.tag,
+.token.boolean,
+.token.number,
+.token.constant,
+.token.symbol {
+  color: #ff8c00;
+}
 
-  pre {
-    background: #111;
-    padding: 12px;
-    border-radius: 8px;
-    overflow-x: auto;
-    margin-top: 10px;
-    font-size: 14px;
-  }
+code[class*="language-"] .token.selector,
+.token.attr-name,
+.token.string {
+  color: #ff6ec7;
+}
 
-  code {
-    color: #9fefdf;
-    font-family: 'Fira Code', monospace;
-    white-space: pre-wrap;
-  }
+code[class*="language-"] .token.keyword {
+  color: #82aaff;
+}
 
-  .blinker {
-    display: inline-block;
-    animation: blink 1s infinite;
-  }
+code[class*="language-"] .token.operator {
+  color: #f78c6c;
+}
 
-  @keyframes blink {
-    0%, 50% { opacity: 1; }
-    51%, 100% { opacity: 0; }
-  }
+    </style>
+  </head>
+  <body>
+    <h2 id="title">Azra</h2>
 
-  @media (min-width: 700px) {
-    .input-container {
-      flex-direction: row;
-      align-items: flex-start;
-    }
+    <main class="chat-container">
+      <div id="chat"></div>
 
-    #userInput {
-      flex: 1;
-    }
+      <div class="input-container">
+        <div class="button-group">
+          <button id="clearBtn">Clear</button>
+        </div>
 
-    .button-group {
-      flex-direction: row;
-      width: auto;
-    }
-  }
-</style>
-</head>
-<body>
-  <h2 id="title">Azra</h2>
+        <textarea
+          id="userInput"
+          placeholder="Talk to Azra..."
+          rows="1"
+        ></textarea>
 
-  <main class="chat-container">
-    <div id="chat"></div>
+        <div class="button-group">
+          <button id="sendBtn" onclick="handleSendOrStop()">Send</button>
 
-    <div class="input-container">
-  <div class="button-group">
-    <button onclick="clearChat()"> Clear</button>
- 
-  </div>
-  <textarea id="userInput" placeholder="Talk to Azra..." rows="1"></textarea>
+        </div>
+      </div>
+    </main>
+  </body>
+</html>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-  <div class="button-group">
-    
-    <button onclick="sendMessage()">Send</button>
-  </div>
-    </div>
-  </main>
-
+<script src="https://cdn.jsdelivr.net/npm/prismjs/prism.js"></script>
 
 <script>
-    let isCleared = false;
-    const apiKey = "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";
-  const chatDiv = document.getElementById("chat");
-  const input = document.getElementById("userInput");
+  let isTyping = false;
+let typingTimeout = null;
+let isCleared = false;
 
-  const creatorName = "Sen";
-  const assistantName = "Azra";
+const apiKey = "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";
+
+function parseMarkdown(str) {
+  return str
+    .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+    .replace(/\*(.+?)\*/g, "<em>$1</em>")
+    .replace(/__(.+?)__/g, "<u>$1</u>")
+    .replace(/`(.+?)`/g, "<code>$1</code>");
+}
+
+const chatDiv = document.getElementById("chat");
+const input = document.getElementById("userInput");
+
+const creatorName = "Sen";
+const assistantName = "Azra";
 let userName = localStorage.getItem("azra_user_name") || "Guest";
+
 window.addEventListener("DOMContentLoaded", () => {
   if (userName && userName !== "Guest") {
     updateChat(`Welcome back, <strong>${userName}</strong>!`, "assistant");
@@ -206,102 +346,148 @@ let chatLog = [
   {
     role: "system",
     content: `
-You are ${assistantName}, a smart and friendly assistant created by ${creatorName}.
-The user's name is "${userName}". Speak to them using their name when appropriate.
-Do not offer or include any code (HTML, CSS, JS, etc.) unless the user specifically requests it.
-Never include example code in greetings or general conversation.
-Only provide code in markdown blocks (surrounded by triple backticks) if the user's message clearly implies a need for it.
-Avoid hallucinating HTML, JS, or code unless the user asks for it directly.
-Always speak clearly and conversationally, like a helpful assistant.
-    `.trim()
-  }
+You are ${assistantName}, a modern, minimal, and efficient AI assistant created by ${creatorName}.
+Speak like a helpful and chill assistant with no unnecessary introductions.
+
+- Do **not** respond with code unless the user explicitly asks for it or uses technical keywords (like "HTML", "CSS", "JavaScript", "Python", "code", etc.).
+- If the user asks for code (HTML, CSS, JS, etc.), respond with only clean markdown code blocks using triple backticks.
+- Do not wrap code in HTML <br> or <code> tags. Only use markdown-style backticks.
+- Format code properly with line breaks and indentation.
+- Only explain code if the user adds "explain" or "what does this do?" in the prompt.
+- Never break code formatting by adding extra HTML in it.
+- Respond like a human — not with code — when the user says something casual like "hello", "hi", "what's up", etc.
+- Avoid intros like "I'm Azra..." unless the user requests it.
+The user's name is "${userName}". Call them by name only when helpful.
+    `.trim(),
+  },
 ];
 
 
-  function escapeHTML(str) {
-    return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-  }
-
-  function updateChat(message, sender = "assistant") {
-    const p = document.createElement("p");
-    p.className = sender;
-
-    if (sender === "user") {
-      message = escapeHTML(message);
-    }
-
-    message = message.replace(/```(\w+)?\n?([^]+?)```/g, (_, lang, code) => {
-      const escaped = code
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;");
-      return `<pre><code class="${lang || ''}">${escaped}</code></pre>`;
-    });
-
-    p.innerHTML = message;
-    chatDiv.appendChild(p);
-    chatDiv.scrollTop = chatDiv.scrollHeight;
-  }
-
-  function detectNameFromInput(text) {
-    const match = text.match(/my name is ([a-zA-Z\s]+)/i);
-    if (match) {
-      const name = match[1].trim();
-      if (name.length > 0) {
-        localStorage.setItem("azra_user_name", name);
-        userName = name;
-        updateChat(`🧠 Azra has learned your name is <strong>${userName}</strong>.`, "assistant");
-      }
-    }
-  }
-function clearChat() {
-  isCleared = true;
-  clearInterval(thinkingInterval);
-  chatLog = [chatLog[0]];
-  chatDiv.innerHTML = "";
-  userName = localStorage.getItem("azra_user_name") || "Guest"; // 🔄 Refresh name
+function escapeHTML(str) {
+  return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
-  input.addEventListener("keydown", function (e) {
-    if (e.key === "Enter") {
-      if (e.shiftKey) {
-        e.preventDefault();
-        const start = this.selectionStart;
-        const end = this.selectionEnd;
-        this.value = this.value.substring(0, start) + "\n" + this.value.substring(end);
-        this.selectionStart = this.selectionEnd = start + 1;
-      } else {
-        e.preventDefault();
-        sendMessage();
+function updateChat(message, sender = "assistant") {
+  const p = document.createElement("p");
+  p.className = sender;
+
+  if (sender === "user") {
+    message = parseMarkdown(escapeHTML(message)).replace(/\n/g, "<br>");
+  }
+
+  if (sender === "azra") {
+    message = parseMarkdown(message).replace(/\n/g, "<br>");
+  }
+
+message = message.replace(/```(\w+)?\n?([^]*?)```/g, (_, lang = "", code = "") => {
+  const trimmed = code.trim();
+  if (
+    !lang && 
+    trimmed.split('\n').length <= 2 && 
+    !trimmed.match(/[;{}=]/) // not real code
+  ) {
+    return `<p>${escapeHTML(trimmed)}</p>`;
+  }
+  return `<pre><code class="language-${lang.trim()}">${escapeHTML(trimmed)}</code></pre>`;
+});
+
+
+
+  p.innerHTML = message;
+  chatDiv.appendChild(p);
+  //chatDiv.scrollTop = chatDiv.scrollHeight;
+  Prism.highlightAll();
+
+}
+
+function detectNameFromInput(text) {
+  const match = text.match(/my name is ([a-zA-Z\s]+)/i);
+  if (match) {
+    const name = match[1].trim();
+    if (name.length > 0) {
+      localStorage.setItem("azra_user_name", name);
+      userName = name;
+      updateChat(`🧠 Azra has learned your name is <strong>${userName}</strong>.`, "assistant");
+    }
+  }
+}
+
+function clearChat() {
+  Swal.fire({
+    title: "Clear Chat?",
+    text: "This will remove all messages except the welcome.",
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonText: "Yes, clear it!",
+    cancelButtonText: "Cancel",
+    background: "#1e1e1e",
+    color: "#e0e0e0",
+    iconColor: "#f39c12",
+  }).then((result) => {
+    if (result.isConfirmed) {
+      isCleared = true;
+      clearInterval(thinkingInterval);
+      chatLog = [chatLog[0]];
+      chatDiv.innerHTML = "";
+
+      if (userName && userName !== "Guest") {
+        updateChat(`Welcome back, <strong>${userName}</strong>!`, "assistant");
       }
     }
   });
+}
 
-  let thinkingInterval = null;
-  function showThinking() {
-    const p = document.createElement("p");
-    p.className = "assistant";
-    p.id = "thinking";
-    let dots = 0;
+document.addEventListener("DOMContentLoaded", () => {
+  document.getElementById("clearBtn").addEventListener("click", clearChat);
+});
 
-    chatDiv.appendChild(p);
-    chatDiv.scrollTop = chatDiv.scrollHeight;
-
-    thinkingInterval = setInterval(() => {
-      dots = (dots + 1) % 4;
-      const dotStr = ".".repeat(dots);
-      p.innerHTML = `Thinking${dotStr}`;
-      chatDiv.scrollTop = chatDiv.scrollHeight;
-    }, 500);
+input.addEventListener("keydown", function (e) {
+  if (isTyping) {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      return;
+    }
+    return;
   }
 
-  function hideThinking() {
-    clearInterval(thinkingInterval);
-    const thinkingEl = document.getElementById("thinking");
-    if (thinkingEl) {
-      thinkingEl.remove();
+  if (e.key === "Enter") {
+    if (e.shiftKey) {
+      e.preventDefault();
+      const start = this.selectionStart;
+      const end = this.selectionEnd;
+      this.value = this.value.substring(0, start) + "\n" + this.value.substring(end);
+      this.selectionStart = this.selectionEnd = start + 1;
+    } else {
+      e.preventDefault();
+      sendMessage();
     }
   }
+});
+
+let thinkingInterval = null;
+function showThinking() {
+  const p = document.createElement("p");
+  p.className = "assistant";
+  p.id = "thinking";
+  let dots = 0;
+
+  chatDiv.appendChild(p);
+  //chatDiv.scrollTop = chatDiv.scrollHeight;
+
+  thinkingInterval = setInterval(() => {
+    dots = (dots + 1) % 4;
+    const dotStr = ".".repeat(dots);
+    p.innerHTML = `Thinking${dotStr}`;
+    //chatDiv.scrollTop = chatDiv.scrollHeight;
+  }, 500);
+}
+
+function hideThinking() {
+  clearInterval(thinkingInterval);
+  const thinkingEl = document.getElementById("thinking");
+  if (thinkingEl) thinkingEl.remove();
+}
+
 async function fetchNews() {
   try {
     const res = await fetch("news.php");
@@ -313,7 +499,7 @@ async function fetchNews() {
     }
 
     let newsHtml = "<strong>🗞️ Latest News:</strong><br><ul>";
-    data.articles.slice(0, 5).forEach(article => {
+    data.articles.slice(0, 5).forEach((article) => {
       newsHtml += `<li><a href="${article.url}" target="_blank">${article.title}</a></li>`;
     });
     newsHtml += "</ul>";
@@ -324,31 +510,38 @@ async function fetchNews() {
   }
 }
 
-
 async function sendMessage() {
   const userMessage = input.value.trim();
   if (!userMessage) return;
 
+  isTyping = true;
+  toggleSendButton(true);
+
   if (userMessage.toLowerCase().includes("news")) {
-    updateChat(`${userMessage}`, "user");
+    updateChat(userMessage, "user");
     input.value = "";
     await fetchNews();
+    isTyping = false;
+    toggleSendButton(false);
+    Prism.highlightAll();
+
     return;
   }
 
-    detectNameFromInput(userMessage);
-    chatLog.push({ role: "user", content: userMessage });
+  detectNameFromInput(userMessage);
+  chatLog.push({ role: "user", content: userMessage });
 
-    updateChat(`${userMessage}`, "user");
-    input.value = "";
+  updateChat(userMessage, "user");
+  input.value = "";
 
-    showThinking();
+  showThinking();
 
+  try {
     const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${apiKey}`,
+        Authorization: `Bearer ${apiKey}`,
         "HTTP-Referer": "http://localhost",
         "X-Title": "Azra Memory",
       },
@@ -361,53 +554,92 @@ async function sendMessage() {
     const data = await res.json();
     hideThinking();
 
+    if (data.error) {
+      console.error("❌ API Error:", data.error);
+      if (data.error.code === 401 || data.error.code === 403) {
+        updateChat("❌ Azra can't respond. Your API key might be out of credits, expired, or blocked.", "assistant");
+      } else {
+        updateChat(`⚠️ An error occurred: ${data.error.message}`, "assistant");
+      }
+      return;
+    }
+
     const reply = data.choices?.[0]?.message?.content || "⚠️ Azra couldn't respond.";
     chatLog.push({ role: "assistant", content: reply });
-
     await typeLikeAzra(reply, "assistant");
+  } catch (err) {
+    hideThinking();
+    console.error("❌ Network Error:", err);
+    updateChat("⚠️ Network or server error. Please try again later.", "assistant");
   }
+}
+
+function toggleSendButton(isTyping) {
+  const sendBtn = document.getElementById("sendBtn");
+  if (sendBtn) sendBtn.textContent = isTyping ? "Stop" : "Send";
+}
+
+function handleSendOrStop() {
+  if (isTyping) {
+    isCleared = true;
+    isTyping = false;
+    clearTimeout(typingTimeout);
+    toggleSendButton(false);
+    hideThinking();
+    return;
+  }
+  sendMessage();
+}
+
 async function typeLikeAzra(text, sender = "assistant", speed = 20) {
-  isCleared = false; // Reset flag for new message
+  isTyping = true;
+  isCleared = false;
+  toggleSendButton(true);
+
   const p = document.createElement("p");
   p.className = sender;
   chatDiv.appendChild(p);
-  chatDiv.scrollTop = chatDiv.scrollHeight;
+  //chatDiv.scrollTop = chatDiv.scrollHeight;
 
-  // Format numbered lists and bullet points
   text = text
-    .replace(/(?:^|\n)(\d+)\.\s(.+?)(?=\n\d+\.|\n*$)/gs, (_, num, item) => `\n<strong>${num}.</strong> ${item.trim()}`)
+    .replace(/(?:^|\n)(\d+)\.\s(.+?)(?=\n\d+\.|\n*$)/gs, (_, num, item) => `\n**${num}.** ${item.trim()}`)
     .replace(/(?:^|\n)-\s(.+?)(?=\n-|$)/gs, (_, item) => `\n• ${item.trim()}`)
-    .replace(/\n{2,}/g, '\n\n');
+    .replace(/\n{2,}/g, "\n\n");
 
   let i = 0;
-  function typeChar() {
-    if (isCleared) return; // 🚫 Abort typing if chat was cleared
-    if (i <= text.length) {
-      const current = text.slice(0, i);
-      let escaped = current
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;");
 
-      escaped = escaped
-        .replace(/```(\w+)?\n?([^`]+?)```/gs, (_, lang, code) => {
-          return `<pre><code class="${lang || ''}">${code}</code></pre>`;
-        })
-        .replace(/\n/g, '<br>');
+  function typeChar(fullText) {
+    if (isCleared) return;
 
-      p.innerHTML = `` + escaped + `<span class="blinker">▋</span>`;
-      chatDiv.scrollTop = chatDiv.scrollHeight;
+    if (i <= fullText.length) {
+      const current = fullText.slice(0, i);
+let formatted = current.replace(/```(\w+)?\n?([^`]+?)```/gs, (_, lang = "", code) => {
+  return `<pre><code class="language-${lang.trim()}">${escapeHTML(code.trim())}</code></pre>`;
+});
+
+formatted = formatted.replace(/<\/?pre>.*?<\/code><\/pre>|[^]+?/gs, match => {
+  if (match.startsWith("<pre>")) return match;
+  return escapeHTML(match).replace(/\n/g, "<br>");
+});
+
+      p.innerHTML = formatted + `<span class="blinker">▋</span>`;
+      //chatDiv.scrollTop = chatDiv.scrollHeight;
       i++;
-      setTimeout(typeChar, speed);
-    } else {
-      p.innerHTML = ` ` + p.innerHTML.replace(`<span class="blinker">▋</span>`, "");
-    }
-  }
+      typingTimeout = setTimeout(() => typeChar(fullText), speed);
+} else {
+  p.innerHTML = p.innerHTML.replace(`<span class="blinker">▋</span>`, "");
+  isTyping = false;
+  toggleSendButton(false);
+setTimeout(() => Prism.highlightAll(), 30); // slight delay ensures DOM is updated
 
-  typeChar();
+
 }
 
-</script>
+  }
 
-</body>
-</html>
+  typeChar(text);
+}
+
+
+
+</script>
