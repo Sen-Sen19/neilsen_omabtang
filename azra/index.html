@@ -319,7 +319,7 @@ code[class*="language-"] .token.operator {
 let typingTimeout = null;
 let isCleared = false;
 
-const apiKey = "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";
+const apiKey = "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";
 
 function parseMarkdown(str) {
   return str
@@ -535,21 +535,18 @@ async function sendMessage() {
   input.value = "";
 
   showThinking();
+try {
+const res = await fetch("proxy.php", {
 
-  try {
-    const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
-        "HTTP-Referer": "http://localhost",
-        "X-Title": "Azra Memory",
-      },
-      body: JSON.stringify({
-        model: "mistralai/mistral-7b-instruct",
-        messages: chatLog.slice(-10),
-      }),
-    });
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: "mistralai/mistral-7b-instruct",
+      messages: chatLog.slice(-10),
+    }),
+  });
 
     const data = await res.json();
     hideThinking();
