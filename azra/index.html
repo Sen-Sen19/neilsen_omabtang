@@ -3,640 +3,345 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<!-- Prism core -->
-<script src="https://cdn.jsdelivr.net/npm/prismjs/prism.js"></script>
-
-<!-- Optional: Add language support plugins here -->
-<script src="https://cdn.jsdelivr.net/npm/prismjs/components/prism-javascript.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/prismjs/components/prism-html.min.js"></script>
-<link href="https://cdn.jsdelivr.net/npm/prismjs/themes/prism-tomorrow.css" rel="stylesheet" />
-
-
-
-
     <title>Azra</title>
+    <link href="https://cdn.jsdelivr.net/npm/prismjs/themes/prism-tomorrow.css" rel="stylesheet"/>
+    <link href="style.css" rel="stylesheet"/>
 
-    <style>
-      * {
-        box-sizing: border-box;
-      }
-
-      body {
-        margin: 0;
-        padding: 0;
-        font-family: "Segoe UI", sans-serif;
-        background-color: #0d0d0d;
-        color: #e0e0e0;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        min-height: 100vh;
-      }
-
-      h2#title {
-        margin: 24px 0 16px;
-        font-size: 28px;
-        color: #fff;
-        text-shadow: 0 0 5px #4fc3f7;
-        text-align: center;
-      }
-
-      .chat-container {
-        width: 95%;
-        max-width: 800px;
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        padding: 16px;
-        box-sizing: border-box;
-      }
-
-      #chat {
-        flex: 1;
-        overflow-y: auto;
-        background: rgba(255, 255, 255, 0.03);
-        border: 1px solid #616161;
-        border-radius: 14px;
-        padding: 15px;
-        margin-bottom: 14px;
-        backdrop-filter: blur(4px);
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-        min-height: 300px;
-        max-height: 60vh;
-      }
-
-      #chat p {
-        padding: 10px 14px;
-        border-radius: 20px;
-        max-width: 75%;
-        word-wrap: break-word;
-        line-height: 1.5;
-        font-size: 15px;
-        display: inline-block;
-        white-space: pre-wrap;
-      }
-
-      #chat p.user {
-        background: #1e3a5f;
-        color: #d4edff;
-        align-self: flex-end;
-        text-align: right;
-        border-bottom-right-radius: 2px;
-      }
-
-      #chat p.assistant {
-        background: #1a1a1a;
-        color: #ffffff;
-        align-self: flex-start;
-        text-align: left;
-        border-bottom-left-radius: 2px;
-      }
-
-      .input-container {
-        display: flex;
-        align-items: stretch;
-        gap: 10px;
-        width: 100%;
-      }
-
-      #userInput {
-        flex: 1;
-        background: #1a1a1a;
-        color: #fff;
-        border: 1px solid #616161;
-        padding: 12px 16px;
-        border-radius: 10px;
-        font-family: monospace;
-        resize: none;
-        min-height: 42px;
-        max-height: 200px;
-        overflow-y: auto;
-        font-size: 14px;
-        transition: border-color 0.3s;
-      }
-
-      #userInput:focus {
-        border-color: #4fc3f7;
-        outline: none;
-      }
-
-      .button-group {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-      }
-
-      button {
-        background: #222;
-        color: #fff;
-        border: 1px solid #616161;
-        padding: 12px 16px;
-        border-radius: 10px;
-        cursor: pointer;
-        font-size: 14px;
-        transition: all 0.3s ease;
-      }
-
-      button:hover {
-        background: #333;
-        border-color: #4fc3f7;
-        color: #4fc3f7;
-      }
-
-      pre {
-        background: #111;
-        padding: 12px;
-        border-radius: 8px;
-        overflow-x: auto;
-        margin-top: 10px;
-        font-size: 14px;
-      }
-
-      code {
-        color: #9fefdf;
-        font-family: "Fira Code", monospace;
-        white-space: pre-wrap;
-      }
-
-      .blinker {
-        display: inline-block;
-        animation: blink 1s infinite;
-      }
-
-      @keyframes blink {
-        0%,
-        50% {
-          opacity: 1;
-        }
-        51%,
-        100% {
-          opacity: 0;
-        }
-      }
-
-      @media (max-width: 600px) {
-        .input-container {
-          flex-direction: column;
-          gap: 8px;
-        }
-
-        .button-group {
-          justify-content: space-between;
-        }
-
-        #userInput {
-          font-size: 13px;
-        }
-
-        button {
-          width: 100%;
-        }
-      }
-
-      #chat::-webkit-scrollbar {
-        width: 6px;
-      }
-
-      #chat::-webkit-scrollbar-track {
-        background: transparent;
-      }
-
-      #chat::-webkit-scrollbar-thumb {
-        background-color: #4fc3f7;
-        border-radius: 10px;
-      }
-
-      #chat {
-        scrollbar-color: #4fc3f7 transparent; /* For Firefox */
-        scrollbar-width: thin;
-      }
-
-      textarea {
-        overflow-y: auto;
-        scrollbar-width: thin;
-        scrollbar-color: #4fc3f7 transparent; /* Firefox */
-      }
-
-      textarea::-webkit-scrollbar {
-        width: 6px;
-      }
-
-      textarea::-webkit-scrollbar-track {
-        background: transparent;
-      }
-
-      textarea::-webkit-scrollbar-thumb {
-        background-color: #4fc3f7;
-        border-radius: 10px;
-      }
-
-
-      pre code {
-  display: block;
-  padding: 1rem;
-  border: 1px solid #00ff88; /* neon green border */
-  border-radius: 0.5rem;
-  background: #0d0d0d; /* dark cyber background */
-  color: #c0fdfb; /* soft cyan font */
-  font-family: 'Fira Code', monospace;
-  font-size: 0.95rem;
-  line-height: 1.5;
-  overflow-x: auto;
-  box-shadow: 0 0 12px #00ff8855;
-  transition: all 0.3s ease;
-}
-
-/* Add subtle syntax colors if you're not using Prism.js */
-code[class*="language-"] .token.comment,
-.token.prolog,
-.token.doctype,
-.token.cdata {
-  color: #6c757d;
-}
-
-code[class*="language-"] .token.punctuation {
-  color: #c3e88d;
-}
-
-code[class*="language-"] .token.property,
-.token.tag,
-.token.boolean,
-.token.number,
-.token.constant,
-.token.symbol {
-  color: #ff8c00;
-}
-
-code[class*="language-"] .token.selector,
-.token.attr-name,
-.token.string {
-  color: #ff6ec7;
-}
-
-code[class*="language-"] .token.keyword {
-  color: #82aaff;
-}
-
-code[class*="language-"] .token.operator {
-  color: #f78c6c;
-}
-
-    </style>
   </head>
   <body>
-    <h2 id="title">Azra</h2>
+    <!-- Header -->
+    <header>
+      <div class="logo-circle">
+        <svg
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          viewBox="0 0 24 24"
+        >
+          <path
+            d="M12 2v2M8 2v2M16 2v2M12 22c4.418 0 8-3.582 8-8V8a8 8 0 10-16 0v6c0 4.418 3.582 8 8 8z"
+          />
+          <circle cx="9" cy="12" r="1" />
+          <circle cx="15" cy="12" r="1" />
+        </svg>
+      </div>
+      <div class="header-text">
+        <h1>Azra</h1>
+        <p>AI Assistant</p>
+      </div>
+    </header>
 
-    <main class="chat-container">
-      <div id="chat"></div>
 
-      <div class="input-container">
-        <div class="button-group">
-          <button id="clearBtn">Clear</button>
-        </div>
+    <main>
+      <div id="chat-area">
+        <div class="chat-container">
+  
+          <div id="chat-log">
+            <div class="welcome-box">
+              <div class="welcome-icon">
+                <svg
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    d="M12 2v2M8 2v2M16 2v2M12 22c4.418 0 8-3.582 8-8V8a8 8 0 10-16 0v6c0 4.418 3.582 8 8 8z"
+                  />
+                  <circle cx="9" cy="12" r="1" />
+                  <circle cx="15" cy="12" r="1" />
+                </svg>
+              </div>
+              <div class="welcome-text">
+                <h2>Azra is Online</h2>
+                <p>
+                  Hi there! I'm Azra, your AI assistant. I can help you with
+                  anything – from answering questions and providing explanations
+                  to writing code and solving problems. What would you like to
+                  explore today?
+                </p>
+              </div>
+            </div>
+          </div>
 
-        <textarea
-          id="userInput"
-          placeholder="Talk to Azra..."
-          rows="1"
-        ></textarea>
+          <!-- Input -->
+          <div class="input-box">
+            <button
+              onclick="clearChat()"
+              title="Clear Chat"
+              class="left-icon-btn">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  d="M3 6h18M8 6V4h8v2m1 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6h14z"/>
+              </svg>
+            </button>
 
-        <div class="button-group">
-          <button id="sendBtn" onclick="handleSendOrStop()">Send</button>
+            <textarea
+              id="chat-input"
+              rows="1"
+              placeholder="Ask Azra anything..."
+              oninput="autoResize(this)"
+            ></textarea>
 
+            <button onclick="clearInput()" title="Clear">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+
+            <button onclick="sendMessage()" title="Send">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path d="M22 2L11 13" />
+                <path d="M22 2L15 22L11 13L2 9L22 2Z" />
+              </svg>
+            </button>
+          </div>
         </div>
       </div>
     </main>
-  </body>
-</html>
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-<script src="https://cdn.jsdelivr.net/npm/prismjs/prism.js"></script>
 
-<script>
-  let isTyping = false;
-let typingTimeout = null;
-let isCleared = false;
+    <footer>
+      <div class="footer-meta">
+        &copy; 2025 <strong>Sen</strong> &bull;
+        <span class="ai-quote"
+          >Artificial? Maybe. Intelligent? Definitely.</span
+        >
+      </div>
+      <div class="footer-links">
+        All rights reserved &bull; <a href="#">Privacy</a> &bull;
+        <a href="#">Terms</a>
+      </div>
+    </footer>
+ <script>
+const chatInput = document.getElementById("chat-input");
+const chatLog = document.getElementById("chat-log");
 
-const apiKey = "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";
+let userName = localStorage.getItem("azra_username");
 
-function parseMarkdown(str) {
-  return str
-    .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
-    .replace(/\*(.+?)\*/g, "<em>$1</em>")
-    .replace(/__(.+?)__/g, "<u>$1</u>")
-    .replace(/`(.+?)`/g, "<code>$1</code>");
+function setUserName(name) {
+  userName = name.trim().replace(/\b\w/g, c => c.toUpperCase());
+  localStorage.setItem("azra_username", userName);
 }
 
-const chatDiv = document.getElementById("chat");
-const input = document.getElementById("userInput");
+if (!userName) {
+  const initialName = prompt("Hi! What's your name?");
+  setUserName(initialName || "Friend");
+  appendBotMessage(`Nice to meet you, ${userName}!`);
+} else {
+  userName = userName.trim().replace(/\b\w/g, c => c.toUpperCase());
+  appendBotMessage(`Welcome back, ${userName}.`);
+}
 
-const creatorName = "Sen";
-const assistantName = "Azra";
-let userName = localStorage.getItem("azra_user_name") || "Guest";
+function appendBotMessage(msg) {
+  const botMsg = document.createElement("div");
+  botMsg.className = "chat-message bot";
+  botMsg.innerHTML = `<span>${msg}</span>`;
+  chatLog.appendChild(botMsg);
+  scrollToBottom();
+}
 
-window.addEventListener("DOMContentLoaded", () => {
-  if (userName && userName !== "Guest") {
-    updateChat(`Welcome back, <strong>${userName}</strong>!`, "assistant");
-  }
-});
-
-let chatLog = [
+let messages = [
   {
     role: "system",
-    content: `
-You are ${assistantName}, a modern, minimal, and efficient AI assistant created by ${creatorName}.
-Speak like a helpful and chill assistant with no unnecessary introductions.
-
-- Do **not** respond with code unless the user explicitly asks for it or uses technical keywords (like "HTML", "CSS", "JavaScript", "Python", "code", etc.).
-- If the user asks for code (HTML, CSS, JS, etc.), respond with only clean markdown code blocks using triple backticks.
-- Do not wrap code in HTML <br> or <code> tags. Only use markdown-style backticks.
-- Format code properly with line breaks and indentation.
-- Only explain code if the user adds "explain" or "what does this do?" in the prompt.
-- Never break code formatting by adding extra HTML in it.
-- Respond like a human — not with code — when the user says something casual like "hello", "hi", "what's up", etc.
-- Avoid intros like "I'm Azra..." unless the user requests it.
-The user's name is "${userName}". Call them by name only when helpful.
-    `.trim(),
-  },
+    content: "You are Azra, a helpful and clever AI assistant. Be concise, kind, and intelligent. Do not mention your creator unless asked directly."
+  }
 ];
 
+let greeted = false;
 
-function escapeHTML(str) {
-  return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+function autoResize(textarea) {
+  textarea.style.height = "auto";
+  textarea.style.height = `${textarea.scrollHeight}px`;
 }
 
-function updateChat(message, sender = "assistant") {
-  const p = document.createElement("p");
-  p.className = sender;
-
-  if (sender === "user") {
-    message = parseMarkdown(escapeHTML(message)).replace(/\n/g, "<br>");
-  }
-
-  if (sender === "azra") {
-    message = parseMarkdown(message).replace(/\n/g, "<br>");
-  }
-
-message = message.replace(/```(\w+)?\n?([^]*?)```/g, (_, lang = "", code = "") => {
-  const trimmed = code.trim();
-  if (
-    !lang && 
-    trimmed.split('\n').length <= 2 && 
-    !trimmed.match(/[;{}=]/) // not real code
-  ) {
-    return `<p>${escapeHTML(trimmed)}</p>`;
-  }
-  return `<pre><code class="language-${lang.trim()}">${escapeHTML(trimmed)}</code></pre>`;
-});
-
-
-
-  p.innerHTML = message;
-  chatDiv.appendChild(p);
-  //chatDiv.scrollTop = chatDiv.scrollHeight;
-  Prism.highlightAll();
-
-}
-
-function detectNameFromInput(text) {
-  const match = text.match(/my name is ([a-zA-Z\s]+)/i);
-  if (match) {
-    const name = match[1].trim();
-    if (name.length > 0) {
-      localStorage.setItem("azra_user_name", name);
-      userName = name;
-      updateChat(`🧠 Azra has learned your name is <strong>${userName}</strong>.`, "assistant");
-    }
-  }
+function clearInput() {
+  chatInput.value = "";
+  autoResize(chatInput);
 }
 
 function clearChat() {
-  Swal.fire({
-    title: "Clear Chat?",
-    text: "This will remove all messages except the welcome.",
-    icon: "warning",
-    showCancelButton: true,
-    confirmButtonText: "Yes, clear it!",
-    cancelButtonText: "Cancel",
-    background: "#1e1e1e",
-    color: "#e0e0e0",
-    iconColor: "#f39c12",
-  }).then((result) => {
-    if (result.isConfirmed) {
-      isCleared = true;
-      clearInterval(thinkingInterval);
-      chatLog = [chatLog[0]];
-      chatDiv.innerHTML = "";
-
-      if (userName && userName !== "Guest") {
-        updateChat(`Welcome back, <strong>${userName}</strong>!`, "assistant");
-      }
+  messages = messages.slice(0, 1);
+  [...chatLog.children].forEach(child => {
+    if (!child.classList.contains("welcome-box")) {
+      chatLog.removeChild(child);
     }
   });
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-  document.getElementById("clearBtn").addEventListener("click", clearChat);
-});
-
-input.addEventListener("keydown", function (e) {
-  if (isTyping) {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      return;
-    }
-    return;
-  }
-
-  if (e.key === "Enter") {
-    if (e.shiftKey) {
-      e.preventDefault();
-      const start = this.selectionStart;
-      const end = this.selectionEnd;
-      this.value = this.value.substring(0, start) + "\n" + this.value.substring(end);
-      this.selectionStart = this.selectionEnd = start + 1;
-    } else {
-      e.preventDefault();
-      sendMessage();
-    }
-  }
-});
-
-let thinkingInterval = null;
-function showThinking() {
-  const p = document.createElement("p");
-  p.className = "assistant";
-  p.id = "thinking";
-  let dots = 0;
-
-  chatDiv.appendChild(p);
-  //chatDiv.scrollTop = chatDiv.scrollHeight;
-
-  thinkingInterval = setInterval(() => {
-    dots = (dots + 1) % 4;
-    const dotStr = ".".repeat(dots);
-    p.innerHTML = `Thinking${dotStr}`;
-    //chatDiv.scrollTop = chatDiv.scrollHeight;
-  }, 500);
+function scrollToBottom() {
+  chatLog.scrollTop = chatLog.scrollHeight;
 }
 
-function hideThinking() {
-  clearInterval(thinkingInterval);
-  const thinkingEl = document.getElementById("thinking");
-  if (thinkingEl) thinkingEl.remove();
-}
-
-async function fetchNews() {
-  try {
-    const res = await fetch("news.php");
-    const data = await res.json();
-
-    if (!data.articles || data.articles.length === 0) {
-      updateChat("⚠️ No news found.", "assistant");
-      return;
-    }
-
-    let newsHtml = "<strong>🗞️ Latest News:</strong><br><ul>";
-    data.articles.slice(0, 5).forEach((article) => {
-      newsHtml += `<li><a href="${article.url}" target="_blank">${article.title}</a></li>`;
-    });
-    newsHtml += "</ul>";
-
-    updateChat(newsHtml, "assistant");
-  } catch (err) {
-    updateChat("⚠️ Couldn't fetch news. Please try again later.", "assistant");
-  }
+function showTyping() {
+  const typing = document.createElement("div");
+  typing.className = "chat-message loading";
+  typing.innerHTML = `<span class="dot"></span><span class="dot"></span><span class="dot"></span>`;
+  chatLog.appendChild(typing);
+  scrollToBottom();
+  return typing;
 }
 
 async function sendMessage() {
-  const userMessage = input.value.trim();
-  if (!userMessage) return;
+  const message = chatInput.value.trim();
+  if (!message) return;
 
-  isTyping = true;
-  toggleSendButton(true);
-
-  if (userMessage.toLowerCase().includes("news")) {
-    updateChat(userMessage, "user");
-    input.value = "";
-    await fetchNews();
-    isTyping = false;
-    toggleSendButton(false);
-    Prism.highlightAll();
-
+  // Name change commands
+  if (/^(change|i want to change) my name/i.test(message)) {
+    const newName = prompt("What should I call you?");
+    if (newName) {
+      setUserName(newName);
+      alert(`Got it! I'll call you ${userName} from now on.`);
+      appendBotMessage(`Name updated. Nice to meet you again, ${userName}!`);
+    }
+    clearInput();
     return;
   }
 
-  detectNameFromInput(userMessage);
-  chatLog.push({ role: "user", content: userMessage });
+  const nameMatch = message.match(/my name is\s+([a-zA-Z0-9 _-]+)/i);
+  if (nameMatch) {
+    setUserName(nameMatch[1]);
+    appendBotMessage(`Nice to meet you, ${userName}!`);
+  }
 
-  updateChat(userMessage, "user");
-  input.value = "";
+  if (message.toLowerCase() === "who am i?") {
+    appendBotMessage(`You're ${userName}, of course.`);
+    clearInput();
+    return;
+  }
 
-  showThinking();
-try {
-const res = await fetch("proxy.php", {
+  // Show user message in chat log
+  const userMsg = document.createElement("div");
+  userMsg.className = "chat-message user";
+  userMsg.innerHTML = message.replace(/\n/g, "<br>");
+  chatLog.appendChild(userMsg);
 
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: "mistralai/mistral-7b-instruct",
-      messages: chatLog.slice(-10),
-    }),
-  });
+  messages.push({ role: "user", content: message });
 
-    const data = await res.json();
-    hideThinking();
+  clearInput();
+  scrollToBottom();
 
-    if (data.error) {
-      console.error("❌ API Error:", data.error);
-      if (data.error.code === 401 || data.error.code === 403) {
-        updateChat("❌ Azra can't respond. Your API key might be out of credits, expired, or blocked.", "assistant");
-      } else {
-        updateChat(`⚠️ An error occurred: ${data.error.message}`, "assistant");
-      }
-      return;
+  const typing = showTyping();
+
+  try {
+    const res = await fetch("chat.php", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "mistralai/mistral-7b-instruct",
+        messages: messages.slice(-10),
+      }),
+    });
+
+    // Use text + try/catch for JSON parse with debug info
+    const text = await res.text();
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch (err) {
+      throw new Error("Invalid JSON received:\n" + text);
     }
 
-    const reply = data.choices?.[0]?.message?.content || "⚠️ Azra couldn't respond.";
-    chatLog.push({ role: "assistant", content: reply });
-    await typeLikeAzra(reply, "assistant");
-  } catch (err) {
-    hideThinking();
-    console.error("❌ Network Error:", err);
-    updateChat("⚠️ Network or server error. Please try again later.", "assistant");
+    typing.remove();
+
+    if (data.choices && data.choices.length > 0) {
+      let reply = data.choices[0].message.content;
+
+      const lowerUserMessage = message.toLowerCase();
+      const askedAboutCreator =
+        lowerUserMessage.includes("who created you") ||
+        lowerUserMessage.includes("your creator") ||
+        lowerUserMessage.includes("who made you");
+
+      if (askedAboutCreator) {
+        reply = `My creator is Sen, a very skilled developer. 😊<br><br>${reply}`;
+      }
+
+      const cleanReply = reply.replace(/[^a-zA-Z0-9 ]/g, "").toLowerCase();
+      const nameInReply = cleanReply.includes(userName.toLowerCase());
+      const alreadyGreeting = /^hello[, ]/i.test(reply.trim());
+
+      if (userName && !nameInReply && !alreadyGreeting && !greeted) {
+        reply = `Hello, ${userName}!<br><br>${reply}`;
+        greeted = true;
+      }
+
+      messages.push({ role: "assistant", content: reply });
+
+      const aiReply = document.createElement("div");
+      aiReply.className = "chat-message bot";
+      aiReply.innerHTML = `<div style="display: flex; align-items: center; gap: 8px;">
+          <span>${reply.replace(/\n/g, "<br>")}</span>
+        </div>`;
+      chatLog.appendChild(aiReply);
+      scrollToBottom();
+    } else if (data.error) {
+      throw new Error(data.message || "API returned an error.");
+    } else {
+      throw new Error("No response from AI.");
+    }
+  } catch (error) {
+    typing.remove();
+    const errorReply = document.createElement("div");
+    errorReply.className = "chat-message bot";
+    errorReply.innerHTML = `<span style="color:red;">❌ Error: ${error.message}</span>`;
+    chatLog.appendChild(errorReply);
+    scrollToBottom();
   }
 }
 
-function toggleSendButton(isTyping) {
-  const sendBtn = document.getElementById("sendBtn");
-  if (sendBtn) sendBtn.textContent = isTyping ? "Stop" : "Send";
-}
-
-function handleSendOrStop() {
-  if (isTyping) {
-    isCleared = true;
-    isTyping = false;
-    clearTimeout(typingTimeout);
-    toggleSendButton(false);
-    hideThinking();
-    return;
+chatInput.addEventListener("keydown", e => {
+  if (e.key === "Enter" && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
   }
-  sendMessage();
-}
-
-async function typeLikeAzra(text, sender = "assistant", speed = 20) {
-  isTyping = true;
-  isCleared = false;
-  toggleSendButton(true);
-
-  const p = document.createElement("p");
-  p.className = sender;
-  chatDiv.appendChild(p);
-  //chatDiv.scrollTop = chatDiv.scrollHeight;
-
-  text = text
-    .replace(/(?:^|\n)(\d+)\.\s(.+?)(?=\n\d+\.|\n*$)/gs, (_, num, item) => `\n**${num}.** ${item.trim()}`)
-    .replace(/(?:^|\n)-\s(.+?)(?=\n-|$)/gs, (_, item) => `\n• ${item.trim()}`)
-    .replace(/\n{2,}/g, "\n\n");
-
-  let i = 0;
-
-  function typeChar(fullText) {
-    if (isCleared) return;
-
-    if (i <= fullText.length) {
-      const current = fullText.slice(0, i);
-let formatted = current.replace(/```(\w+)?\n?([^`]+?)```/gs, (_, lang = "", code) => {
-  return `<pre><code class="language-${lang.trim()}">${escapeHTML(code.trim())}</code></pre>`;
 });
 
-formatted = formatted.replace(/<\/?pre>.*?<\/code><\/pre>|[^]+?/gs, match => {
-  if (match.startsWith("<pre>")) return match;
-  return escapeHTML(match).replace(/\n/g, "<br>");
-});
+const placeholders = [
+  "Ask Azra anything...",
+  "What can I help you build today?",
+  "Need code help? Just ask!",
+  "Debugging something tricky?",
+  "Need a clever idea?",
+  "Feeling stuck? Let me brainstorm with you!",
+];
+let pIndex = 0;
+setInterval(() => {
+  chatInput.placeholder = placeholders[pIndex++ % placeholders.length];
+}, 4000);
 
-      p.innerHTML = formatted + `<span class="blinker">▋</span>`;
-      //chatDiv.scrollTop = chatDiv.scrollHeight;
-      i++;
-      typingTimeout = setTimeout(() => typeChar(fullText), speed);
-} else {
-  p.innerHTML = p.innerHTML.replace(`<span class="blinker">▋</span>`, "");
-  isTyping = false;
-  toggleSendButton(false);
-setTimeout(() => Prism.highlightAll(), 30); // slight delay ensures DOM is updated
-
-
+function autoResize(textarea) {
+  textarea.style.height = "auto";
+  textarea.style.height = `${textarea.scrollHeight}px`;
 }
 
-  }
-
-  typeChar(text);
+function clearInput() {
+  chatInput.value = "";
+  autoResize(chatInput);
 }
 
+function clearChat() {
+  messages = messages.slice(0, 1);
+  [...chatLog.children].forEach(child => {
+    if (!child.classList.contains("welcome-box")) {
+      chatLog.removeChild(child);
+    }
+  });
+}
 
+function scrollToBottom() {
+  chatLog.scrollTop = chatLog.scrollHeight;
+}
 
+function showTyping() {
+  const typing = document.createElement("div");
+  typing.className = "chat-message loading";
+  typing.innerHTML = `<span class="dot"></span><span class="dot"></span><span class="dot"></span>`;
+  chatLog.appendChild(typing);
+  scrollToBottom();
+  return typing;
+}
 </script>
+
+</body>
+</html>
