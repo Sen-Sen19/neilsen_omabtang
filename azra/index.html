@@ -233,19 +233,21 @@ let greeted = false; // 👈 Add this after messages
     const typing = showTyping();
 
     try {
-const res = await fetch("https://MistralChatCompanion.marcneilsen0219.repl.co/proxy.php",  {
+const proxyURL = "https://mistralchatcompanion.marcneilsen0219.repl.co/";
+
+fetch(proxyURL, {
   method: "POST",
   headers: {
     "Content-Type": "application/json"
   },
-body: JSON.stringify({
-  model: "mistralai/mistral-7b-instruct",
-  messages: messages.slice(-10),
-  temperature: 0.7,
-  max_tokens: 1024,
-}),
-
+  body: JSON.stringify({
+    model: "mistralai/mistral-7b-instruct",
+    messages: messages.slice(-10),
+    temperature: 0.7,
+    max_tokens: 1024,
+  })
 });
+
 
 
       const data = await res.json();
