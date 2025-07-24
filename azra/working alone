@@ -233,20 +233,19 @@ let greeted = false; // 👈 Add this after messages
     const typing = showTyping();
 
     try {
-const res = await fetch("https://azra-ai.great-site.net/proxy.php", {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json"
-  },
-body: JSON.stringify({
-  model: "mistralai/mistral-7b-instruct",
-  messages: messages.slice(-10),
-  temperature: 0.7,
-  max_tokens: 1024,
-}),
-
-});
-
+      const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer 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`,
+          "HTTP-Referer": "http://localhost",
+          "X-Title": "Azra Memory",
+        },
+        body: JSON.stringify({
+          model: "mistralai/mistral-7b-instruct",
+          messages: messages.slice(-10),
+        }),
+      });
 
       const data = await res.json();
 
