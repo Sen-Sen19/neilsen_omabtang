@@ -192,6 +192,32 @@
 }
 
 
+
+
+
+
+
+
+
+
+.azra-icon .logo-circle {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #c7c7c7, #8b8b8b);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 0 auto;
+}
+
+.azra-icon svg {
+  width: 36px;
+  height: 36px;
+  stroke: white;
+}
+
+
     </style>
   </head>
   <body>
@@ -261,6 +287,27 @@
           <img src="https://img.icons8.com/fluency/48/controller.png" />
           <span>Games</span>
         </div>
+
+
+          
+<!-- 🤖 Azra Chatbot -->
+<div class="icon azra-icon" ondblclick="openAzraChatbot()">
+  <div class="logo-circle">
+    <svg
+      fill="none"
+      stroke="white"
+      stroke-width="2"
+      viewBox="0 0 24 24">
+      <path d="M12 2v2M8 2v2M16 2v2M12 22c4.418 0 8-3.582 8-8V8a8 8 0 10-16 0v6c0 4.418 3.582 8 8 8z" />
+      <circle cx="9" cy="12" r="1" />
+      <circle cx="15" cy="12" r="1" />
+    </svg>
+  </div>
+  <span>Azra Chatbot</span>
+</div>
+
+
+
       </div>
 
       <div class="taskbar">
@@ -785,12 +832,15 @@
 
 
 
-
-
-
+<script>
+  function openAzraChatbot() {
+    window.open("https://azra-ai.great-site.net/azra/", "_blank");
+  }
+</script>
 
 
     <script type="module">
+
       import { WindowManager } from "./windowManager.js";
 
              // <!-- ========================= Files Modal ========================= -->
@@ -955,8 +1005,7 @@ document.querySelectorAll("#browser-tabs .tab").forEach((tab) => {
     }
   });
 });
-
-
+  
 
     </script>
   </body>

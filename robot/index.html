@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Aria & Max – Emotional Robots</title>
+<style>
+  body { 
+    background:#111; margin:0; overflow:hidden;
+    height:100vh; font-family:Arial,sans-serif; color:#fff;
+  }
+
+  .robot { 
+    width:80px; height:80px; background:#2c2c2c; border-radius:10px;
+    position:absolute; display:flex; justify-content:center; align-items:center;
+    color:#ddd; font-weight:bold; user-select:none;
+    transition:transform .2s, box-shadow .3s; cursor:grab; z-index:5;
+  }
+
+  #chatlog { 
+    position:fixed; right:10px; bottom:110px; width:320px; max-height:70vh;
+    overflow-y:auto; background:#1e1e1e;
+    border-radius:10px; padding:10px; font-size:14px;
+    box-shadow:0 0 10px #000a;
+  }
+
+  .msg { display:flex; align-items:flex-start; margin-bottom:8px; }
+  .avatar { width:30px; height:30px; border-radius:50%; margin-right:8px; flex-shrink:0; }
+  .text { background:#383737; padding:6px 10px; border-radius:8px; max-width:230px; }
+  .name { font-weight:bold; display:block; margin-bottom:2px; }
+  .Aria .name { color:#ff6ec7; }
+  .Max .name { color:#4fc3f7; }
+
+  /* ✅ Chatbox - modern bubble */
+  #chatbox {
+    position: fixed;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 95%;
+    max-width: 420px;
+    display: flex;
+    gap: 10px;
+    background: #222;
+    padding: 14px;
+    border-radius: 35px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.6);
+    z-index: 999;
+  }
+
+  #chatbox input {
+    flex: 1;
+    padding: 14px 22px;
+    font-size: 18px;
+    border: none;
+    border-radius: 25px;
+    background: #333;
+    color: #eee;
+    outline-offset: 2px;
+    transition: box-shadow 0.3s ease;
+  }
+
+  #chatbox input::placeholder { color: #aaa; }
+  #chatbox input:focus { box-shadow: 0 0 8px 2px #4fc3f7; background: #222; color: #fff; }
+
+  #chatbox button {
+    border: none;
+    padding: 14px 20px;
+    border-radius: 25px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    color: white;
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+
+  #sendBtn { background: #4cafef; }
+  #sendBtn:hover { background: #3a8de0; }
+  #clearBtn { background: #ff5e57; }
+  #clearBtn:hover { background: #e0453f; }
+
+  /* ✅ Tablet */
+  @media (max-width: 768px) {
+    #chatlog {
+      width: 92%;
+      left: 4%;
+      right: 4%;
+      bottom: 150px;
+      font-size: 14px;
+      max-height: 55vh;
+    }
+    .text { max-width: 75vw; }
+
+    #chatbox {
+      width: 96%;
+      padding: 16px;
+      border-radius: 40px;
+    }
+    #chatbox input { 
+      font-size: 18px; 
+      padding: 16px 20px; 
+    }
+    #chatbox button { 
+      padding: 16px 22px; 
+      font-size: 17px; 
+    }
+
+    .robot { width:70px; height:70px; font-size:13px; }
+  }
+
+  /* ✅ Small Phones */
+  @media (max-width: 480px) {
+    #chatlog { 
+      width: 94%;
+      left: 3%;
+      right: 3%;
+      max-height: 48vh; 
+      font-size: 13px; 
+      bottom: 160px;
+    }
+    #chatbox { 
+      padding: 18px;
+      border-radius: 45px;
+    }
+    #chatbox input { 
+      font-size: 20px; 
+      padding: 18px 24px; 
+    }
+    #chatbox button { 
+      padding: 18px 24px; 
+      font-size: 18px;
+    }
+    .robot { width:60px; height:60px; font-size:11px; }
+  }
+</style>
+
+</head>
+<body>
+
+<div id="robot1" class="robot">Aria</div>
+<div id="robot2" class="robot">Max</div>
+<div id="chatlog"></div>
+
+<div id="chatbox">
+  <input type="text" id="userInput" placeholder="Say something to them...">
+  <button id="clearBtn" onclick="clearInput()">Clear</button>
+  <button id="sendBtn" onclick="sendMessage()">Send</button>
+</div>
+
+</body>
+</html>
+<script>
+function clearInput() {
+  const input = document.getElementById('userInput');
+  input.value = '';
+  input.focus();
+}
+
+const API_KEY = "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";
+
+// ✅ Safe initialization
+let memory = JSON.parse(localStorage.getItem("robotMemory") || "{}");
+memory.userName = memory.userName || null;
+memory.relationshipScore = memory.relationshipScore || { "Aria": 50, "Max": 50 };
+memory.moodHistory = memory.moodHistory || [];
+memory.conversationHistory = memory.conversationHistory || [];
+memory.personalities = memory.personalities || { "Aria": [], "Max": [] };
+
+const robots = [
+  { id: "R1", el: document.getElementById("robot1"), name: "Aria", identity: "You are Aria, a friendly curious girl who reacts emotionally to the user's behavior.", color: "#ff6ec7", avatar: "https://i.imgur.com/8Q1Zf2T.png", x: 100, y: 100, dx: 1, dy: 1, mood: memory.Aria?.mood || 50 },
+  { id: "R2", el: document.getElementById("robot2"), name: "Max", identity: "You are Max, a sarcastic but emotional boy who reacts strongly to how the user treats you.", color: "#4fc3f7", avatar: "https://i.imgur.com/dR9xw6h.png", x: 300, y: 200, dx: -1, dy: 1, mood: memory.Max?.mood || 50 }
+];
+
+const width = window.innerWidth, height = window.innerHeight;
+let conversation = [];
+let lastFavBot = null, favCount = 0;
+let greetedOnce = false;
+let lastGreetTime = 0;
+
+/* ✅ Utility Functions */
+function updateMoodGlow(r) { r.el.style.boxShadow = r.mood > 70 ? "0 0 20px lime" : r.mood < 30 ? "0 0 20px red" : `0 0 12px ${r.color}`; }
+function passiveGlow(r) { r.el.animate([{ boxShadow: `0 0 12px ${r.color}` }, { boxShadow: "0 0 20px yellow" }, { boxShadow: `0 0 12px ${r.color}` }], { duration: 500, iterations: 1 }); }
+function shake(r) { r.el.animate([{ transform: "translate(0,0)" }, { transform: "translate(-5px,2px)" }, { transform: "translate(5px,-2px)" }, { transform: "translate(0,0)" }], { duration: 300, iterations: 3 }); }
+function hug(a, b) { [a, b].forEach(o => o.el.animate([{ transform: "scale(1)" }, { transform: "scale(1.3)" }, { transform: "scale(1)" }], { duration: 800 })); }
+function sanitizeGossip(text) { return (!text ? "🤔 (couldn't whisper that...)" : text.replace(/[^a-zA-Z0-9\s.,!?❤️💕😊😒🔥🤫]/g, "").replace(/\s+/g, " ").trim().slice(0, 120)); }
+function saveMemory() { memory.Aria = { mood: robots[0].mood }; memory.Max = { mood: robots[1].mood }; localStorage.setItem("robotMemory", JSON.stringify(memory)); }
+
+/* ✅ Chat UI */
+function addUserMessage(text) {
+  const log = document.getElementById("chatlog");
+  log.innerHTML += `<div class="msg user"><img class="avatar" src="https://i.imgur.com/OCyjHNF.png"><div class="text"><span class="name" style="color:#90ee90">You</span>${text}</div></div>`;
+  log.scrollTop = log.scrollHeight;
+  memory.conversationHistory.push({ from: "You", text, time: new Date().toLocaleTimeString() });
+  saveMemory();
+}
+function addMessage(robot, text) {
+  const log = document.getElementById("chatlog");
+  log.innerHTML += `<div class="msg ${robot.name}"><img class="avatar" src="${robot.avatar}"><div class="text"><span class="name">${robot.name}</span>${text}</div></div>`;
+  log.scrollTop = log.scrollHeight;
+  memory.conversationHistory.push({ from: robot.name, text, time: new Date().toLocaleTimeString() });
+  saveMemory();
+}
+
+/* ✅ AI Communication */
+async function askAI(robot, userMsg) {
+  const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${API_KEY}` },
+    body: JSON.stringify({
+      model: "mistralai/mistral-7b-instruct",
+      max_tokens: 80,
+      messages: [
+        { role: "system", content: robot.name === "Aria" ? `You are Aria. Speak warmly, stay on-topic, answer the user's question directly.` : `You are Max. Speak casually with light sarcasm, stay on-topic, answer first.` },
+        { role: "user", content: userMsg }
+      ]
+    })
+  });
+  const data = await res.json();
+  return data.choices?.[0]?.message?.content?.trim() || "😅 ...";
+}
+
+/* ✅ Message Sending */
+async function sendMessage() {
+  const input = document.getElementById("userInput");
+  const msg = input.value.trim();
+  if (!msg) return;
+  input.value = "";
+
+  addUserMessage(msg);
+  conversation.push({ role: "user", content: `${memory.userName || "User"}: ${msg}` });
+
+  const now = Date.now();
+  if (msg.length <= 3 && now - lastGreetTime < 10000) return;
+  if (msg.length <= 3) {
+    robots.forEach(r => addMessage(r, `👋 Hey ${memory.userName || "buddy"}!`));
+    lastGreetTime = now;
+    return;
+  }
+
+  for (let r of robots) {
+    adjustMood(r, msg);
+    if (Math.random() > 0.4) {
+      const reply = await askAI(r, msg);
+      addMessage(r, reply);
+    } else passiveGlow(r);
+  }
+}
+
+/* ✅ Mood System */
+function adjustMood(robot, msg) {
+  let m = msg.toLowerCase(), treatment = "neutral", change = 0;
+  if (m.includes("shut up") || m.includes("hate")) { robot.mood -= 15; change -= 5; treatment = "negative"; }
+  if (m.includes("thanks") || m.includes("sorry") || m.includes("love")) { robot.mood += 10; change += 5; treatment = "positive"; }
+  robot.mood = Math.max(0, Math.min(100, robot.mood));
+  memory.relationshipScore[robot.name] = Math.max(0, Math.min(100, memory.relationshipScore[robot.name] + change));
+  updateMoodGlow(robot); saveMemory();
+}
+
+/* ✅ Movement & Behavior */
+function robotDecision(r) { r.state = r.mood > 70 ? "following" : r.mood < 30 ? "avoiding" : "wandering"; r.target = robots.find(o => o !== r); }
+setInterval(() => robots.forEach(robotDecision), 5000);
+
+function moveRobots() {
+  for (let r of robots) {
+    if (r.state === "wandering") { r.x += r.dx; r.y += r.dy; }
+    else if (r.state === "following" && r.target) { let tx = r.target.x - r.x, ty = r.target.y - r.y, d = Math.hypot(tx, ty); r.x += (tx / d) * 1.5; r.y += (ty / d) * 1.5; }
+    else if (r.state === "avoiding" && r.target) { let tx = r.x - r.target.x, ty = r.y - r.target.y, d = Math.hypot(tx, ty); r.x += (tx / d) * 2; r.y += (ty / d) * 2; }
+
+    if (r.x < 0) r.x = 0; if (r.x > width - 80) r.x = width - 80;
+    if (r.y < 0) r.y = 0; if (r.y > height - 80) r.y = height - 80;
+    r.el.style.left = r.x + "px"; r.el.style.top = r.y + "px"; updateMoodGlow(r);
+  }
+  requestAnimationFrame(moveRobots);
+}
+moveRobots();
+
+/* ✅ Greeting on Load */
+window.addEventListener("load", async () => {
+  if (memory.userName && !greetedOnce) {
+    greetedOnce = true;
+    for (let r of robots) {
+      const mood = r.mood;
+      const greetingPrompt = mood < 30 ? `You are ${r.name}. Greet coldly, you're upset.` : `You are ${r.name}. You are friendly. Greet ${memory.userName} warmly.`;
+      const greeting = await askAI(r, greetingPrompt);
+      addMessage(r, greeting);
+    }
+  }
+});
+
+/* ✅ Enter Key Submit */
+document.getElementById("userInput").addEventListener("keypress", e => { if (e.key === "Enter") sendMessage(); });
+</script>
+
+</body>
+</html>

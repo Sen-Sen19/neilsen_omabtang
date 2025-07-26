@@ -1,0 +1,78 @@
+@media (max-width: 1024px) {
+  .wrapper {
+    padding: 40px !important;
+  }
+  .month-label, .year-label {
+    font-size: 1.5rem !important;
+  }
+  .nav-arrow {
+    font-size: 2rem !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .wrapper {
+    padding: 20px !important;
+  }
+  .container {
+    flex-direction: column !important;
+    height: auto !important;
+  }
+  .left, .right {
+    width: 100% !important;
+    height: auto !important; /* overrides 50% or fixed heights */
+  }
+  .left {
+    padding: 1rem !important;
+    text-align: center !important;
+  }
+  .logo {
+    width: 180px !important;
+    top: 10px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+  }
+  .glass-card {
+    padding: 1rem !important;
+    width: 90% !important;
+    margin: 0 auto !important;
+  }
+  .month-label, .year-label {
+    font-size: 1.3rem !important;
+  }
+  .nav-arrow {
+    font-size: 2rem !important;
+  }
+  .calendar-grid {
+    gap: 0.3rem !important;
+  }
+  .day, .day-name {
+    font-size: 0.7rem !important;
+    padding: 0.3rem !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .wrapper {
+    padding: 10px !important;
+  }
+  .month-label, .year-label {
+    font-size: 1.1rem !important;
+  }
+  .nav-arrow {
+    font-size: 1.5rem !important;
+    padding: 0 !important;
+  }
+  .day, .day-name {
+    font-size: 0.6rem !important;
+    padding: 0.2rem !important;
+  }
+  .modal-content {
+    width: 95% !important;
+    padding: 1rem !important;
+  }
+  .month-option, .year-option {
+    font-size: 0.8rem !important;
+    padding: 0.3rem !important;
+  }
+}
